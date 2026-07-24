@@ -56,6 +56,10 @@ public class EventQueryRepository {
 		dto.setRawJsonPayload(rs.getString("RAW_JSON_PAYLOAD"));
 		dto.setAssignedTo(rs.getString("ASSIGNED_TO"));
 		dto.setAcknowledgedAt(TimestampFormatUtil.format(rs.getObject("ACKNOWLEDGED_AT", OffsetDateTime.class)));
+		dto.setResolvedBy(rs.getString("RESOLVED_BY"));
+		dto.setResolvedAt(TimestampFormatUtil.format(rs.getObject("RESOLVED_AT", OffsetDateTime.class)));
+		dto.setClosedBy(rs.getString("CLOSED_BY"));
+		dto.setClosedAt(TimestampFormatUtil.format(rs.getObject("CLOSED_AT", OffsetDateTime.class)));
 
 		int caseCount = rs.getInt("CASE_COUNT");
 		dto.setHasCase(caseCount > 0);

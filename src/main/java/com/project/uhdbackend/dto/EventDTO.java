@@ -28,6 +28,10 @@ public class EventDTO {
 	private String assignedTo;
 	private String acknowledgedAt;
 	private String readBy;
+	private String resolvedBy;
+	private String resolvedAt;
+	private String closedBy;
+	private String closedAt;
 
 	private boolean hasCase;
 	private List<Long> caseIds;
@@ -56,6 +60,10 @@ public class EventDTO {
 		this.acknowledgedAt = TimestampFormatUtil.format(event.getAcknowledgedAt());
 		this.rawJsonPayload = event.getRawJsonPayload();
 		this.readBy = event.getReadBy();
+		this.resolvedBy = event.getResolvedBy();
+		this.resolvedAt = TimestampFormatUtil.format(event.getResolvedAt());
+		this.closedBy = event.getClosedBy();
+		this.closedAt = TimestampFormatUtil.format(event.getClosedAt());
 
 		this.validationErrorMessage = event.getValidationErrorMessage();
 	}
@@ -215,6 +223,38 @@ public class EventDTO {
 
 	public void setReadBy(String readBy) {
 		this.readBy = readBy;
+	}
+
+	public String getResolvedBy() {
+		return resolvedBy;
+	}
+
+	public void setResolvedBy(String resolvedBy) {
+		this.resolvedBy = resolvedBy;
+	}
+
+	public String getResolvedAt() {
+		return resolvedAt;
+	}
+
+	public void setResolvedAt(String resolvedAt) {
+		this.resolvedAt = resolvedAt;
+	}
+
+	public String getClosedBy() {
+		return closedBy;
+	}
+
+	public void setClosedBy(String closedBy) {
+		this.closedBy = closedBy;
+	}
+
+	public String getClosedAt() {
+		return closedAt;
+	}
+
+	public void setClosedAt(String closedAt) {
+		this.closedAt = closedAt;
 	}
 
 	@JsonInclude(JsonInclude.Include.NON_NULL)

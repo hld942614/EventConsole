@@ -90,48 +90,52 @@ public class EventStatusService {
 	}
 
 	@Transactional
-	public Event resolve(String eventId) {
+	public Event resolve(String eventId, String resolvedBy) {
 		Event event = getEventOrThrow(eventId);
 		if (!EventStatus.RESOLVED.isStrictUpgradeFrom(event.getEventStatus())) {
 			throw new IllegalStateException(
 					"不允許的狀態轉換: " + event.getEventStatus() + " -> RESOLVED (eventId=" + eventId + ")");
 		}
 		event.setResolvedAt(OffsetDateTime.now());
+		event.setResolvedBy(resolvedBy);
 		event.setEventStatus(EventStatus.RESOLVED);
 		return saveAndPublish(event, EventType.EVENT_RESOLVED);
 	}
 
 	@Transactional
-	public Event close(String eventId) {
+	public Event close(String eventId, String closedBy) {
 		Event event = getEventOrThrow(eventId);
 		if (!EventStatus.CLOSED.isStrictUpgradeFrom(event.getEventStatus())) {
 			throw new IllegalStateException(
 					"不允許的狀態轉換: " + event.getEventStatus() + " -> CLOSED (eventId=" + eventId + ")");
 		}
 		event.setClosedAt(OffsetDateTime.now());
+		event.setClosedBy(closedBy);
 		event.setEventStatus(EventStatus.CLOSED);
 		return saveAndPublish(event, EventType.EVENT_CLOSED);
 	}
 
 	/** 供 Case resolve 時 cascade 呼叫：只有還在 CLASSIFIED 的事件才會被推動 */
 	@Transactional
-	public void cascadeResolveFromCase(Event event) {
+	public void cascadeResolveFromCase(Event event, String resolvedBy) {
 		if (event.getEventStatus() != EventStatus.CLASSIFIED) {
 			return;
 		}
 		event.setResolvedAt(OffsetDateTime.now());
+		event.setResolvedBy(resolvedBy);
 		event.setEventStatus(EventStatus.RESOLVED);
 		saveAndPublish(event, EventType.EVENT_RESOLVED);
 	}
 
 	/** 供 Case close 時 cascade 呼叫：CLASSIFIED 或（已被上一步 cascade 過的）RESOLVED 都會被推動 */
 	@Transactional
-	public void cascadeCloseFromCase(Event event) {
+	public void cascadeCloseFromCase(Event event, String closedBy) {
 		EventStatus current = event.getEventStatus();
 		if (current != EventStatus.CLASSIFIED && current != EventStatus.RESOLVED) {
 			return;
 		}
 		event.setClosedAt(OffsetDateTime.now());
+		event.setClosedBy(closedBy);
 		event.setEventStatus(EventStatus.CLOSED);
 		saveAndPublish(event, EventType.EVENT_CLOSED);
 	}

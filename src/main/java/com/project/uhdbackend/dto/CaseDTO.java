@@ -20,6 +20,13 @@ public class CaseDTO {
 	@JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
 	private LocalDateTime createTime;
 
+	private String resolvedBy;
+	@JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
+	private LocalDateTime resolvedAt;
+	private String closedBy;
+	@JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
+	private LocalDateTime closedAt;
+
 //	private Set<MessageDTO> messages;
 	private Set<CommentDTO> comments;
 	private Set<EventDTO> events;
@@ -45,6 +52,12 @@ public class CaseDTO {
 		}
 		this.createTime = input.getCreatedAt();
 		this.ruleEnabled = input.getRuleEnabled();
+
+		this.resolvedBy = input.getResolvedBy();
+		this.resolvedAt = input.getResolvedAt();
+		this.closedBy = input.getClosedBy();
+		this.closedAt = input.getClosedAt();
+
 	}
 
 	public Long getId() {
@@ -141,5 +154,37 @@ public class CaseDTO {
 
 	public void setEvents(Set<EventDTO> events) {
 		this.events = events;
+	}
+
+	public String getResolvedBy() {
+		return resolvedBy;
+	}
+
+	public void setResolvedBy(String resolvedBy) {
+		this.resolvedBy = resolvedBy;
+	}
+
+	public LocalDateTime getResolvedAt() {
+		return resolvedAt;
+	}
+
+	public void setResolvedAt(LocalDateTime resolvedAt) {
+		this.resolvedAt = resolvedAt;
+	}
+
+	public String getClosedBy() {
+		return closedBy;
+	}
+
+	public void setClosedBy(String closedBy) {
+		this.closedBy = closedBy;
+	}
+
+	public LocalDateTime getClosedAt() {
+		return closedAt;
+	}
+
+	public void setClosedAt(LocalDateTime closedAt) {
+		this.closedAt = closedAt;
 	}
 }

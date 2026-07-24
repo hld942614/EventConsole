@@ -65,6 +65,18 @@ public class Case {
 	@Column(name = "CASE_UPDATED_AT")
 	private LocalDateTime updatedAt;
 
+	@Column(name = "CASE_RESOLVED_BY", length = 100)
+	private String resolvedBy;
+
+	@Column(name = "CASE_RESOLVED_AT")
+	private LocalDateTime resolvedAt;
+
+	@Column(name = "CASE_CLOSED_BY", length = 100)
+	private String closedBy;
+
+	@Column(name = "CASE_CLOSED_AT")
+	private LocalDateTime closedAt;
+
 	@ManyToMany
 	@JoinTable(name = "MUHD_CASE_COMMENT", joinColumns = @JoinColumn(name = "CASE_ID"), inverseJoinColumns = @JoinColumn(name = "COMMENT_ID"))
 	private Set<Comment> comments = new HashSet<>();
@@ -213,6 +225,38 @@ public class Case {
 	public void removeEvent(Event event) {
 		this.events.remove(event);
 		event.getCases().remove(this);
+	}
+
+	public String getResolvedBy() {
+		return resolvedBy;
+	}
+
+	public void setResolvedBy(String resolvedBy) {
+		this.resolvedBy = resolvedBy;
+	}
+
+	public LocalDateTime getResolvedAt() {
+		return resolvedAt;
+	}
+
+	public void setResolvedAt(LocalDateTime resolvedAt) {
+		this.resolvedAt = resolvedAt;
+	}
+
+	public String getClosedBy() {
+		return closedBy;
+	}
+
+	public void setClosedBy(String closedBy) {
+		this.closedBy = closedBy;
+	}
+
+	public LocalDateTime getClosedAt() {
+		return closedAt;
+	}
+
+	public void setClosedAt(LocalDateTime closedAt) {
+		this.closedAt = closedAt;
 	}
 
 	@Override

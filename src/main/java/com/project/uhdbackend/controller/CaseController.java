@@ -1,6 +1,7 @@
 package com.project.uhdbackend.controller;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -8,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,8 +17,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.project.uhdbackend.dto.ApiResponse;
+import com.project.uhdbackend.dto.CaseCloseRequest;
 import com.project.uhdbackend.dto.CaseCreateRequest;
 import com.project.uhdbackend.dto.CaseDTO;
+import com.project.uhdbackend.dto.CaseResolveRequest;
 import com.project.uhdbackend.dto.CaseUpdateRequest;
 import com.project.uhdbackend.entity.Case;
 import com.project.uhdbackend.service.CaseService;
@@ -147,5 +151,31 @@ public class CaseController {
 		}
 
 		return ResponseEntity.ok(new ApiResponse<>(true, "Case deleted successfully", null));
+	}
+
+	@PatchMapping("/{caseId}/resolve")
+	public ResponseEntity<ApiResponse<CaseDTO>> resolveCase(@PathVariable Long caseId,
+			@RequestBody CaseResolveRequest request) {
+		try {
+			CaseDTO dto = caseService.resolveCase(caseId, request.getResolvedBy());
+			return ResponseEntity.ok(new ApiResponse<>(true, "Case resolved", dto));
+		} catch (NoSuchElementException e) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse<>(false, e.getMessage(), null));
+		} catch (IllegalStateException e) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, e.getMessage(), null));
+		}
+	}
+
+	@PatchMapping("/{caseId}/close")
+	public ResponseEntity<ApiResponse<CaseDTO>> closeCase(@PathVariable Long caseId,
+			@RequestBody CaseCloseRequest request) {
+		try {
+			CaseDTO dto = caseService.closeCase(caseId, request.getClosedBy());
+			return ResponseEntity.ok(new ApiResponse<>(true, "Case closed", dto));
+		} catch (NoSuchElementException e) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse<>(false, e.getMessage(), null));
+		} catch (IllegalStateException e) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, e.getMessage(), null));
+		}
 	}
 }

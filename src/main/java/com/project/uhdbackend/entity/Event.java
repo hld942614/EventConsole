@@ -112,6 +112,12 @@ public class Event {
 	@Column(name = "READ_BY", length = 100)
 	private String readBy;
 
+	@Column(name = "RESOLVED_BY", length = 100)
+	private String resolvedBy;
+
+	@Column(name = "CLOSED_BY", length = 100)
+	private String closedBy;
+
 	@Enumerated(EnumType.STRING)
 	@Column(name = "EVENT_STATUS", nullable = false)
 	private EventStatus eventStatus = EventStatus.UNREAD;
@@ -392,5 +398,21 @@ public class Event {
 
 	public void setReadBy(String readBy) {
 		this.readBy = readBy;
+	}
+
+	public String getResolvedBy() {
+		return resolvedBy;
+	}
+
+	public void setResolvedBy(String resolvedBy) {
+		this.resolvedBy = resolvedBy;
+	}
+
+	public String getClosedBy() {
+		return closedBy;
+	}
+
+	public void setClosedBy(String closedBy) {
+		this.closedBy = closedBy;
 	}
 }

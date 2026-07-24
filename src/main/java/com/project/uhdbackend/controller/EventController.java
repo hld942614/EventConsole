@@ -14,8 +14,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.project.uhdbackend.dto.ApiResponse;
+import com.project.uhdbackend.dto.EventCloseRequest;
 import com.project.uhdbackend.dto.EventDTO;
 import com.project.uhdbackend.dto.EventReadRequest;
+import com.project.uhdbackend.dto.EventResolveRequest;
 import com.project.uhdbackend.dto.EventSearchRequest;
 import com.project.uhdbackend.dto.EventStatusUpdateRequest;
 import com.project.uhdbackend.entity.Event;
@@ -83,14 +85,16 @@ public class EventController {
 	}
 
 	@PatchMapping("/{eventId}/resolve")
-	public ResponseEntity<ApiResponse<EventDTO>> resolve(@PathVariable String eventId) {
-		Event event = eventStatusService.resolve(eventId);
+	public ResponseEntity<ApiResponse<EventDTO>> resolve(@PathVariable String eventId,
+			@RequestBody EventResolveRequest request) {
+		Event event = eventStatusService.resolve(eventId, request.getResolvedBy());
 		return ResponseEntity.ok(new ApiResponse<>(true, "Event resolved", new EventDTO(event)));
 	}
 
 	@PatchMapping("/{eventId}/close")
-	public ResponseEntity<ApiResponse<EventDTO>> close(@PathVariable String eventId) {
-		Event event = eventStatusService.close(eventId);
+	public ResponseEntity<ApiResponse<EventDTO>> close(@PathVariable String eventId,
+			@RequestBody EventCloseRequest request) {
+		Event event = eventStatusService.close(eventId, request.getClosedBy());
 		return ResponseEntity.ok(new ApiResponse<>(true, "Event closed", new EventDTO(event)));
 	}
 }

@@ -1,5 +1,6 @@
 package com.project.uhdbackend.service;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -219,7 +220,7 @@ public class CaseService {
 		target.setStatus(CaseStatus.PROCESSING);
 		Case saved = caseRepository.save(target);
 		CaseDTO dto = new CaseDTO(saved);
-		realtimeEventService.publish(EventType.CASE_UPDATED, "CASE", dto.getId(), dto);
+		realtimeEventService.publish(EventType.CASE_PROCESSING, "CASE", dto.getId(), dto);
 	}
 
 	/**
@@ -227,7 +228,7 @@ public class CaseService {
 	 * RESOLVED
 	 */
 	@Transactional
-	public CaseDTO resolveCase(Long caseId) {
+	public CaseDTO resolveCase(Long caseId, String actor) {
 		Case existingCase = caseRepository.findById(caseId)
 				.orElseThrow(() -> new NoSuchElementException("Case not found"));
 
@@ -236,13 +237,16 @@ public class CaseService {
 		}
 
 		existingCase.setStatus(CaseStatus.RESOLVED);
+		existingCase.setResolvedBy(actor);
+		existingCase.setResolvedAt(LocalDateTime.now());
+
 		for (Event event : existingCase.getEvents()) {
-			eventStatusService.cascadeResolveFromCase(event);
+			eventStatusService.cascadeResolveFromCase(event, actor);
 		}
 
 		Case saved = caseRepository.save(existingCase);
 		CaseDTO dto = new CaseDTO(saved);
-		realtimeEventService.publish(EventType.CASE_UPDATED, "CASE", dto.getId(), dto);
+		realtimeEventService.publish(EventType.CASE_RESOLVED, "CASE", dto.getId(), dto);
 		return dto;
 	}
 
@@ -251,7 +255,7 @@ public class CaseService {
 	 * 的 Event -> CLOSED
 	 */
 	@Transactional
-	public CaseDTO closeCase(Long caseId) {
+	public CaseDTO closeCase(Long caseId, String actor) {
 		Case existingCase = caseRepository.findById(caseId)
 				.orElseThrow(() -> new NoSuchElementException("Case not found"));
 
@@ -260,13 +264,16 @@ public class CaseService {
 		}
 
 		existingCase.setStatus(CaseStatus.CLOSED);
+		existingCase.setClosedBy(actor);
+		existingCase.setClosedAt(LocalDateTime.now());
+
 		for (Event event : existingCase.getEvents()) {
-			eventStatusService.cascadeCloseFromCase(event);
+			eventStatusService.cascadeCloseFromCase(event, actor);
 		}
 
 		Case saved = caseRepository.save(existingCase);
 		CaseDTO dto = new CaseDTO(saved);
-		realtimeEventService.publish(EventType.CASE_UPDATED, "CASE", dto.getId(), dto);
+		realtimeEventService.publish(EventType.CASE_CLOSED, "CASE", dto.getId(), dto);
 		return dto;
 	}
 }
