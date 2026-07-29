@@ -3,26 +3,31 @@ package com.project.uhdbackend.dto;
 import java.util.List;
 
 import com.project.uhdbackend.enums.EventStatus;
+import com.project.uhdbackend.utils.CommentStatus;
 
 public class EventSearchRequest {
 	private List<EventStatus> statusArray;
 	private String subject;
-	private String moduleCode; // 對應 Message 的 mainCategory
+	private String moduleCode;
 	private String sender;
-	private String content; // 對應 MESSAGE_CONTENT
-	private String day; // 對應 Message 的 day，篩選基準改成 OCCURRED_AT
+	private String content;
+	private String startDay; // 篩選區間起始日（含），基準為 OCCURRED_AT
+	private String endDay; // 篩選區間結束日（含），基準為 OCCURRED_AT
+	private CommentStatus processingDetailStatus;
 
 	public EventSearchRequest() {
 	}
 
 	public EventSearchRequest(List<EventStatus> statusArray, String subject, String moduleCode, String sender,
-			String content, String day) {
+			String content, String startDay, String endDay, CommentStatus processingDetailStatus) {
 		this.statusArray = statusArray;
 		this.subject = subject;
 		this.moduleCode = moduleCode;
 		this.sender = sender;
 		this.content = content;
-		this.day = day;
+		this.startDay = startDay;
+		this.endDay = endDay;
+		this.processingDetailStatus = processingDetailStatus;
 	}
 
 	public List<EventStatus> getStatusArray() {
@@ -65,11 +70,27 @@ public class EventSearchRequest {
 		this.content = content;
 	}
 
-	public String getDay() {
-		return day;
+	public String getStartDay() {
+		return startDay;
 	}
 
-	public void setDay(String day) {
-		this.day = day;
+	public void setStartDay(String startDay) {
+		this.startDay = startDay;
+	}
+
+	public String getEndDay() {
+		return endDay;
+	}
+
+	public void setEndDay(String endDay) {
+		this.endDay = endDay;
+	}
+
+	public CommentStatus getProcessingDetailStatus() {
+		return processingDetailStatus;
+	}
+
+	public void setProcessingDetailStatus(CommentStatus processingDetailStatus) {
+		this.processingDetailStatus = processingDetailStatus;
 	}
 }

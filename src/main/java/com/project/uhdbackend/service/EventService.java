@@ -98,8 +98,9 @@ public class EventService {
 	}
 
 	public List<EventDTO> getEventsByFilters(List<EventStatus> statusArray, String subject, String moduleCode,
-			String sender, String content, String day) {
-		return eventQueryRepository.getEventsByFilters(statusArray, subject, moduleCode, sender, content, day);
+			String sender, String content, String startDay, String endDay) {
+		return eventQueryRepository.getEventsByFilters(statusArray, subject, moduleCode, sender, content, startDay,
+				endDay);
 	}
 
 	@Transactional(readOnly = true)
@@ -117,10 +118,6 @@ public class EventService {
 		realtimeEventService.publish(EventType.EVENT_UPDATED, "EVENT", dto.getId(), dto);
 	}
 
-	/**
-	 * 對照舊有 MessageService.transferMailToMsg(...) 的寫法， 差異：多解析 receiver、內容改為新格式 JSON
-	 * 結構、時間欄位改為 OffsetDateTime。
-	 */
 	public Event transferMailToEvent(String input) throws InvalidEventPayloadException {
 		MimeMessage mm;
 		try {

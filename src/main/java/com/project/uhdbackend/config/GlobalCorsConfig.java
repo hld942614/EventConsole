@@ -20,7 +20,7 @@ public class GlobalCorsConfig {
 		config.setAllowCredentials(true);
 
 		config.setAllowedOriginPatterns(Arrays.asList("*"));
-		config.setAllowedOrigins(Arrays.asList("http://localhost:25513", "http://localhost:26361"));
+		config.setAllowedOrigins(Arrays.asList("http://localhost:25513", "http://localhost:26361", "https://uhd.evergreen-marine.com"));
 
 		config.addAllowedHeader(CorsConfiguration.ALL);
 		config.addAllowedMethod(CorsConfiguration.ALL);

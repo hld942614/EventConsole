@@ -58,7 +58,8 @@ public class EventController {
 	@PostMapping("/search")
 	public ApiResponse<List<EventDTO>> searchEvents(@RequestBody EventSearchRequest request) {
 		List<EventDTO> result = eventService.getEventsByFilters(request.getStatusArray(), request.getSubject(),
-				request.getModuleCode(), request.getSender(), request.getContent(), request.getDay());
+				request.getModuleCode(), request.getSender(), request.getContent(), request.getStartDay(),
+				request.getEndDay());
 		return new ApiResponse<>(true, "Query success", result);
 	}
 

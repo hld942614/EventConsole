@@ -18,13 +18,6 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 	@Query(value = "UPDATE MUHD_COMMENT SET comment_content = :content WHERE comment_id = :id", nativeQuery = true)
 	void updateCommentText(@Param("content") String content, @Param("id") Long id);
 
-//	@Query("select c from Comment c\r\n" + "			where c.commentId in (\r\n"
-//			+ "			    select distinct c2.commentId\r\n" + "			    from Comment c2 join c2.messages m\r\n"
-//			+ "			    where m.messageId in :messageIds\r\n" + "			)")
-//	List<Comment> findAllDistinctByMessageIds(@Param("messageIds") Collection<Long> messageIds, Sort sort);
-
-	// 加在既有 findAllDistinctByMessageIds 旁邊
-
 	@Query("select c from Comment c\r\n" + "			where c.commentId in (\r\n"
 			+ "			    select distinct c2.commentId\r\n" + "			    from Comment c2 join c2.events e\r\n"
 			+ "			    where e.eventId in :eventIds\r\n" + "			)")

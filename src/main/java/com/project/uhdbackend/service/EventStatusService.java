@@ -13,6 +13,7 @@ import com.project.uhdbackend.enums.EventStatus;
 import com.project.uhdbackend.realtime.event.EventType;
 import com.project.uhdbackend.realtime.service.RealtimeEventService;
 import com.project.uhdbackend.repository.EventRepository;
+import com.project.uhdbackend.utils.CommentStatus;
 
 @Service
 public class EventStatusService {
@@ -99,6 +100,7 @@ public class EventStatusService {
 		event.setResolvedAt(OffsetDateTime.now());
 		event.setResolvedBy(resolvedBy);
 		event.setEventStatus(EventStatus.RESOLVED);
+		event.setProcessingDetailStatus(CommentStatus.RESOLVED);
 		return saveAndPublish(event, EventType.EVENT_RESOLVED);
 	}
 
@@ -112,6 +114,7 @@ public class EventStatusService {
 		event.setClosedAt(OffsetDateTime.now());
 		event.setClosedBy(closedBy);
 		event.setEventStatus(EventStatus.CLOSED);
+		event.setProcessingDetailStatus(CommentStatus.CLOSED);
 		return saveAndPublish(event, EventType.EVENT_CLOSED);
 	}
 
@@ -138,6 +141,52 @@ public class EventStatusService {
 		event.setClosedBy(closedBy);
 		event.setEventStatus(EventStatus.CLOSED);
 		saveAndPublish(event, EventType.EVENT_CLOSED);
+	}
+
+	/**
+	 * 留言時同步指定的狀態轉換。 targetStatus 為 null 或 PROCESSING：沿用原本 ensureProcessingOnComment
+	 * 的自動判斷邏輯 （只有 UNREAD/ACKNOWLEDGED 會被推進到 PROCESSING，其餘狀態留言不影響狀態）。 targetStatus 為
+	 * RESOLVED / CLOSED：走嚴格升級檢查，不合法的轉換會拋 IllegalStateException。
+	 * 其餘狀態（UNREAD/ACKNOWLEDGED/CLASSIFIED/INVALID）視為非法輸入。
+	 */
+	@Transactional
+	public void applyCommentStatus(Event event, EventStatus targetStatus, String actor) {
+		if (targetStatus == null || targetStatus == EventStatus.PROCESSING) {
+			ensureProcessingOnComment(event, actor);
+			return;
+		}
+		switch (targetStatus) {
+		case RESOLVED:
+			doResolve(event, actor);
+			break;
+		case CLOSED:
+			doClose(event, actor);
+			break;
+		default:
+			throw new IllegalArgumentException("留言無法將 Event 轉換為狀態: " + targetStatus);
+		}
+	}
+
+	private Event doResolve(Event event, String resolvedBy) {
+		if (!EventStatus.RESOLVED.isStrictUpgradeFrom(event.getEventStatus())) {
+			throw new IllegalStateException(
+					"不允許的狀態轉換: " + event.getEventStatus() + " -> RESOLVED (eventId=" + event.getEventId() + ")");
+		}
+		event.setResolvedAt(OffsetDateTime.now());
+		event.setResolvedBy(resolvedBy);
+		event.setEventStatus(EventStatus.RESOLVED);
+		return saveAndPublish(event, EventType.EVENT_RESOLVED);
+	}
+
+	private Event doClose(Event event, String closedBy) {
+		if (!EventStatus.CLOSED.isStrictUpgradeFrom(event.getEventStatus())) {
+			throw new IllegalStateException(
+					"不允許的狀態轉換: " + event.getEventStatus() + " -> CLOSED (eventId=" + event.getEventId() + ")");
+		}
+		event.setClosedAt(OffsetDateTime.now());
+		event.setClosedBy(closedBy);
+		event.setEventStatus(EventStatus.CLOSED);
+		return saveAndPublish(event, EventType.EVENT_CLOSED);
 	}
 
 	private Event saveAndPublish(Event event, EventType type) {

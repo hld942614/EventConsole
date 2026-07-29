@@ -21,6 +21,7 @@ import javax.persistence.Table;
 import org.json.JSONObject;
 
 import com.project.uhdbackend.enums.CaseStatus;
+import com.project.uhdbackend.utils.CommentStatus;
 import com.project.uhdbackend.utils.YesNoToBooleanConverter;
 
 import lombok.AllArgsConstructor;
@@ -92,6 +93,10 @@ public class Case {
 	@Enumerated(EnumType.STRING)
 	@Column(name = "CASE_STATUS", length = 20, nullable = false)
 	private CaseStatus status = CaseStatus.OPEN;
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "PROCESSING_DETAIL_STATUS", length = 30)
+	private CommentStatus processingDetailStatus;
 
 	public Long getId() {
 		return id;
@@ -257,6 +262,14 @@ public class Case {
 
 	public void setClosedAt(LocalDateTime closedAt) {
 		this.closedAt = closedAt;
+	}
+
+	public CommentStatus getProcessingDetailStatus() {
+		return processingDetailStatus;
+	}
+
+	public void setProcessingDetailStatus(CommentStatus processingDetailStatus) {
+		this.processingDetailStatus = processingDetailStatus;
 	}
 
 	@Override

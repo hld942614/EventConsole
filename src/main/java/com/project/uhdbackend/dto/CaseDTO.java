@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.project.uhdbackend.entity.Case;
+import com.project.uhdbackend.utils.CommentStatus;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 public class CaseDTO {
@@ -30,6 +31,7 @@ public class CaseDTO {
 //	private Set<MessageDTO> messages;
 	private Set<CommentDTO> comments;
 	private Set<EventDTO> events;
+	private CommentStatus processingDetailStatus;
 
 	public CaseDTO(Case input) {
 		this.id = input.getId();
@@ -57,7 +59,7 @@ public class CaseDTO {
 		this.resolvedAt = input.getResolvedAt();
 		this.closedBy = input.getClosedBy();
 		this.closedAt = input.getClosedAt();
-
+		this.processingDetailStatus = input.getProcessingDetailStatus();
 	}
 
 	public Long getId() {
@@ -186,5 +188,13 @@ public class CaseDTO {
 
 	public void setClosedAt(LocalDateTime closedAt) {
 		this.closedAt = closedAt;
+	}
+
+	public CommentStatus getProcessingDetailStatus() {
+		return processingDetailStatus;
+	}
+
+	public void setProcessingDetailStatus(CommentStatus processingDetailStatus) {
+		this.processingDetailStatus = processingDetailStatus;
 	}
 }

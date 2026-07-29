@@ -20,6 +20,7 @@ import javax.persistence.PreUpdate;
 import javax.persistence.Table;
 
 import com.project.uhdbackend.enums.EventStatus;
+import com.project.uhdbackend.utils.CommentStatus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
@@ -135,6 +136,10 @@ public class Event {
 	@JoinTable(name = "MUHD_EVENT_COMMENT", joinColumns = @JoinColumn(name = "EVENT_PK"), inverseJoinColumns = @JoinColumn(name = "COMMENT_ID"))
 	@JsonIgnore
 	private Set<Comment> comments = new HashSet<>();
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "PROCESSING_DETAIL_STATUS", length = 30)
+	private CommentStatus processingDetailStatus;
 
 	@PrePersist
 	public void onCreate() {
@@ -414,5 +419,13 @@ public class Event {
 
 	public void setClosedBy(String closedBy) {
 		this.closedBy = closedBy;
+	}
+
+	public CommentStatus getProcessingDetailStatus() {
+		return processingDetailStatus;
+	}
+
+	public void setProcessingDetailStatus(CommentStatus processingDetailStatus) {
+		this.processingDetailStatus = processingDetailStatus;
 	}
 }

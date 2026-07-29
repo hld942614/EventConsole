@@ -1,23 +1,25 @@
 package com.project.uhdbackend.dto;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 import com.project.uhdbackend.entity.Comment;
+import com.project.uhdbackend.utils.CommentStatus;
 
 public class CommentDTO {
 	private Long commentId;
 	private String content;
 	private String author;
 	private LocalDateTime timestamp;
-	private List<Long> messageIds;
+
+	/** 非 null 時代表這則留言對應一次處理中細節子狀態的切換；前端可據此關閉編輯功能。 */
+	private CommentStatus status;
 
 	public CommentDTO(Comment comment) {
 		this.commentId = comment.getCommentId();
 		this.content = comment.getCommentContent();
 		this.author = comment.getCommentAuthor();
 		this.timestamp = comment.getCommentTimestamp();
-//		this.messageIds = comment.getMessages().stream().map(m -> m.getMessageId()).collect(Collectors.toList());
+		this.status = comment.getStatus();
 	}
 
 	public Long getCommentId() {
@@ -52,12 +54,11 @@ public class CommentDTO {
 		this.timestamp = timestamp;
 	}
 
-	public List<Long> getMessageIds() {
-		return messageIds;
+	public CommentStatus getStatus() {
+		return status;
 	}
 
-	public void setMessageIds(List<Long> messageIds) {
-		this.messageIds = messageIds;
+	public void setStatus(CommentStatus status) {
+		this.status = status;
 	}
-
 }

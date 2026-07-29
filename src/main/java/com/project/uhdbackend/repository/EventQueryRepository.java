@@ -19,15 +19,14 @@ import org.springframework.stereotype.Repository;
 
 import com.project.uhdbackend.dto.EventDTO;
 import com.project.uhdbackend.enums.EventStatus;
+import com.project.uhdbackend.utils.CommentStatus;
 import com.project.uhdbackend.utils.TimestampFormatUtil;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Repository
 public class EventQueryRepository {
 
 	private final NamedParameterJdbcTemplate jdbc;
 	private static final ZoneId ZONE_TPE = ZoneId.of("Asia/Taipei");
-	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
 	public EventQueryRepository(NamedParameterJdbcTemplate jdbc) {
 		this.jdbc = jdbc;
@@ -60,6 +59,10 @@ public class EventQueryRepository {
 		dto.setResolvedAt(TimestampFormatUtil.format(rs.getObject("RESOLVED_AT", OffsetDateTime.class)));
 		dto.setClosedBy(rs.getString("CLOSED_BY"));
 		dto.setClosedAt(TimestampFormatUtil.format(rs.getObject("CLOSED_AT", OffsetDateTime.class)));
+		String processingDetailStatus = rs.getString("PROCESSING_DETAIL_STATUS");
+		if (processingDetailStatus != null) {
+			dto.setProcessingDetailStatus(CommentStatus.valueOf(processingDetailStatus.toUpperCase()));
+		}
 
 		int caseCount = rs.getInt("CASE_COUNT");
 		dto.setHasCase(caseCount > 0);
@@ -92,7 +95,7 @@ public class EventQueryRepository {
 //	}
 
 	public List<EventDTO> getEventsByFilters(List<EventStatus> statusArray, String subject, String moduleCode,
-			String sender, String content, String day) {
+			String sender, String content, String startDay, String endDay) {
 
 		String baseSql = """
 				SELECT e.*,
@@ -139,8 +142,8 @@ public class EventQueryRepository {
 			}
 		}
 
-		if (day != null && !day.isBlank()) {
-			UtcRange r = calcUtcRangeFromTaipeiDay(day.trim());
+		if (startDay != null && !startDay.isBlank() && endDay != null && !endDay.isBlank()) {
+			UtcRange r = calcUtcRangeFromTaipeiDayRange(startDay.trim(), endDay.trim());
 			where.add("e.OCCURRED_AT >= :startUtc");
 			where.add("e.OCCURRED_AT < :endUtc");
 			p.addValue("startUtc", r.startUtc);
@@ -150,6 +153,25 @@ public class EventQueryRepository {
 		String sql = baseSql + " WHERE " + String.join(" AND ", where) + " ORDER BY e.OCCURRED_AT DESC";
 
 		return jdbc.query(sql, p, ROW_MAPPER);
+	}
+
+	/** startDay 00:00（台北時區）到 endDay 隔天 00:00（台北時區）換算成 UTC，結束日為含當天一整天 */
+	private UtcRange calcUtcRangeFromTaipeiDayRange(String startDay, String endDay) {
+
+		LocalDate start = LocalDate.parse(startDay);
+		LocalDate end = LocalDate.parse(endDay);
+
+		if (end.isBefore(start)) {
+			throw new IllegalArgumentException("endDay 不可早於 startDay: startDay=" + startDay + ", endDay=" + endDay);
+		}
+
+		ZonedDateTime startTpe = start.atStartOfDay(ZONE_TPE);
+		ZonedDateTime endTpe = end.plusDays(1).atStartOfDay(ZONE_TPE); // 含 endDay 當天整天
+
+		OffsetDateTime startUtc = startTpe.toOffsetDateTime().withOffsetSameInstant(ZoneOffset.UTC);
+		OffsetDateTime endUtc = endTpe.toOffsetDateTime().withOffsetSameInstant(ZoneOffset.UTC);
+
+		return new UtcRange(startUtc, endUtc);
 	}
 
 	public List<EventDTO> findEventsByCaseId(Long caseId) {
@@ -189,17 +211,5 @@ public class EventQueryRepository {
 			this.startUtc = startUtc;
 			this.endUtc = endUtc;
 		}
-	}
-
-	private UtcRange calcUtcRangeFromTaipeiDay(String day) {
-
-		LocalDate localDate = LocalDate.parse(day);
-		ZonedDateTime startTpe = localDate.atStartOfDay(ZONE_TPE);
-		ZonedDateTime endTpe = startTpe.plusDays(1);
-
-		OffsetDateTime startUtc = startTpe.toOffsetDateTime().withOffsetSameInstant(ZoneOffset.UTC);
-		OffsetDateTime endUtc = endTpe.toOffsetDateTime().withOffsetSameInstant(ZoneOffset.UTC);
-
-		return new UtcRange(startUtc, endUtc);
 	}
 }

@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.project.uhdbackend.entity.Event;
 import com.project.uhdbackend.enums.EventStatus;
+import com.project.uhdbackend.utils.CommentStatus;
 import com.project.uhdbackend.utils.TimestampFormatUtil;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonRawValue;
@@ -40,6 +41,8 @@ public class EventDTO {
 
 	private String validationErrorMessage; // 只有 INVALID 狀態才會有值
 
+	private CommentStatus processingDetailStatus;
+
 	public EventDTO() {
 	}
 
@@ -66,6 +69,7 @@ public class EventDTO {
 		this.closedAt = TimestampFormatUtil.format(event.getClosedAt());
 
 		this.validationErrorMessage = event.getValidationErrorMessage();
+		this.processingDetailStatus = event.getProcessingDetailStatus();
 	}
 
 	public static SourceInfo buildSource(String environment, String host, String ip) {
@@ -255,6 +259,14 @@ public class EventDTO {
 
 	public void setClosedAt(String closedAt) {
 		this.closedAt = closedAt;
+	}
+
+	public CommentStatus getProcessingDetailStatus() {
+		return processingDetailStatus;
+	}
+
+	public void setProcessingDetailStatus(CommentStatus processingDetailStatus) {
+		this.processingDetailStatus = processingDetailStatus;
 	}
 
 	@JsonInclude(JsonInclude.Include.NON_NULL)

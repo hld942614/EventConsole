@@ -6,12 +6,16 @@ import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+
+import com.project.uhdbackend.utils.CommentStatus;
 
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
@@ -37,14 +41,15 @@ public class Comment {
 	@Column(name = "COMMENT_TIMESTAMP")
 	private LocalDateTime commentTimestamp;
 
-//	@ManyToMany(mappedBy = "comments")
-//	private Set<Message> messages = new HashSet<>();
-
 	@ManyToMany(mappedBy = "comments")
 	private Set<Case> cases = new HashSet<>();
 
 	@ManyToMany(mappedBy = "comments")
 	private Set<Event> events = new HashSet<>();
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "STATUS", length = 30)
+	private CommentStatus status;
 
 	public Long getCommentId() {
 		return commentId;
@@ -78,13 +83,9 @@ public class Comment {
 		this.commentTimestamp = commentTimestamp;
 	}
 
-//	public Set<Message> getMessages() {
-//		return messages;
-//	}
-//
-//	public void setMessages(Set<Message> messages) {
-//		this.messages = messages;
-//	}
+	public void setStatus(CommentStatus status) {
+		this.status = status;
+	}
 
 	public Set<Case> getCases() {
 		return cases;
@@ -100,5 +101,9 @@ public class Comment {
 
 	public void setEvents(Set<Event> events) {
 		this.events = events;
+	}
+
+	public CommentStatus getStatus() {
+		return status;
 	}
 }

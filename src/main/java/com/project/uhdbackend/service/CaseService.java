@@ -26,6 +26,7 @@ import com.project.uhdbackend.realtime.service.RealtimeEventService;
 import com.project.uhdbackend.repository.CaseEventRepository;
 import com.project.uhdbackend.repository.CaseRepository;
 import com.project.uhdbackend.repository.EventQueryRepository;
+import com.project.uhdbackend.utils.CommentStatus;
 
 @Service
 public class CaseService {
@@ -85,6 +86,29 @@ public class CaseService {
 
 		CaseDTO dto = new CaseDTO(existingCase);
 		realtimeEventService.publish(EventType.CASE_DELETED, "CASE", dto.getId(), dto);
+	}
+
+	/**
+	 * 留言時同步指定的狀態轉換。 targetStatus 為 null 或 PROCESSING：沿用原本 ensureProcessingOnComment
+	 * 的自動判斷邏輯 （只有 OPEN 會被推進到 PROCESSING）。 targetStatus 為 RESOLVED / CLOSED：走
+	 * resolveCase/closeCase，含 cascade 更新底下 Event 狀態。
+	 */
+	@Transactional
+	public void applyCommentStatus(Case target, CaseStatus targetStatus, String actor) {
+		if (targetStatus == null || targetStatus == CaseStatus.PROCESSING) {
+			ensureProcessingOnComment(target);
+			return;
+		}
+		switch (targetStatus) {
+		case RESOLVED:
+			resolveCase(target.getId(), actor);
+			break;
+		case CLOSED:
+			closeCase(target.getId(), actor);
+			break;
+		default:
+			throw new IllegalArgumentException("留言無法將 Case 轉換為狀態: " + targetStatus);
+		}
 	}
 
 	public List<Case> getAllCases() {
@@ -237,6 +261,7 @@ public class CaseService {
 		}
 
 		existingCase.setStatus(CaseStatus.RESOLVED);
+		existingCase.setProcessingDetailStatus(CommentStatus.RESOLVED);
 		existingCase.setResolvedBy(actor);
 		existingCase.setResolvedAt(LocalDateTime.now());
 
@@ -264,6 +289,7 @@ public class CaseService {
 		}
 
 		existingCase.setStatus(CaseStatus.CLOSED);
+		existingCase.setProcessingDetailStatus(CommentStatus.CLOSED);
 		existingCase.setClosedBy(actor);
 		existingCase.setClosedAt(LocalDateTime.now());
 

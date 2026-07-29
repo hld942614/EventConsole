@@ -43,6 +43,9 @@ public class UploadedFile {
 	@Column(name = "filename")
 	private String fileName;
 
+	@Column(name = "stored_file_name")
+	private String storedFileName;
+
 	@Column(name = "createtime", insertable = false)
 	@JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
 	private LocalDateTime timestamp;
@@ -87,6 +90,14 @@ public class UploadedFile {
 		this.fileName = fileName;
 	}
 
+	public String getStoredFileName() {
+		return storedFileName;
+	}
+
+	public void setStoredFileName(String storedFileName) {
+		this.storedFileName = storedFileName;
+	}
+
 	public LocalDateTime getTimestamp() {
 		return timestamp;
 	}
@@ -103,6 +114,7 @@ public class UploadedFile {
 		jo.put("fileName", fileName);
 		jo.put("description", description);
 		jo.put("timestamp", timestamp);
+		jo.put("storedFileName", storedFileName);
 		return jo.toString();
 	}
 

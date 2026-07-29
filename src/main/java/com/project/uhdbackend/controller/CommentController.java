@@ -27,39 +27,11 @@ public class CommentController {
 		this.commentService = commentService;
 	}
 
-//	@PostMapping("/message")
-//	public ResponseEntity<ApiResponse<CommentDTO>> createMsgComment(@RequestBody MessageCommentCreateRequest request) {
-//		CommentDTO created = commentService.createMsgComment(request);
-//		return ResponseEntity.ok(new ApiResponse<>(true, "留言新增成功", created));
-//	}
-
 	@PostMapping("/case")
 	public ResponseEntity<ApiResponse<CommentDTO>> createCaseComment(@RequestBody CaseCommentCreateRequest request) {
 		CommentDTO created = commentService.createCaseComment(request);
 		return ResponseEntity.ok(new ApiResponse<>(true, "留言新增成功", created));
 	}
-
-//	@DeleteMapping("/{commentId}")
-//	public ResponseEntity<ApiResponse<Void>> deleteComment(@PathVariable Long commentId) {
-//	    try {
-//	        commentService.deleteCommentById(commentId);
-//	        return ResponseEntity.ok(new ApiResponse<>(true, "刪除成功", null));
-//	    } catch (NoSuchElementException e) {
-//	        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-//	                .body(new ApiResponse<>(false, "找不到留言 ID：" + commentId, null));
-//	    } catch (Exception e) {
-//	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-//	                .body(new ApiResponse<>(false, "刪除失敗：" + e.getMessage(), null));
-//	    }
-//	}
-
-//	@PostMapping("/search")
-//	public ResponseEntity<ApiResponse<List<CommentDTO>>> getDistinctCommentsByMessageIds(
-//			@RequestBody CommentSearchRequest req) {
-//		List<CommentDTO> result = commentService.getDistinctCommentsByMessageIds(req.getMessageIds(), req.getOrder());
-//
-//		return ResponseEntity.ok(new ApiResponse<>(true, "查詢成功", result));
-//	}
 
 	@GetMapping("/case/{caseId}")
 	public ResponseEntity<ApiResponse<List<CommentDTO>>> getCommentsByCaseId(@PathVariable Long caseId) {
@@ -79,4 +51,18 @@ public class CommentController {
 		List<CommentDTO> result = commentService.getDistinctCommentsByEventIds(req.getEventIds(), req.getOrder());
 		return ResponseEntity.ok(new ApiResponse<>(true, "查詢成功", result));
 	}
+
+//	/** 處理中細節子狀態的時間軸歷程（只回傳有帶 processingDetailStatus 的留言，依時間排序）。 */
+//	@GetMapping("/event/{eventId}/processing-detail-history")
+//	public ResponseEntity<ApiResponse<List<CommentDTO>>> getEventProcessingDetailHistory(
+//			@PathVariable String eventId) {
+//		List<CommentDTO> result = commentService.getEventProcessingDetailHistory(eventId);
+//		return ResponseEntity.ok(new ApiResponse<>(true, "歷程查詢成功", result));
+//	}
+//
+//	@GetMapping("/case/{caseId}/processing-detail-history")
+//	public ResponseEntity<ApiResponse<List<CommentDTO>>> getCaseProcessingDetailHistory(@PathVariable Long caseId) {
+//		List<CommentDTO> result = commentService.getCaseProcessingDetailHistory(caseId);
+//		return ResponseEntity.ok(new ApiResponse<>(true, "歷程查詢成功", result));
+//	}
 }
