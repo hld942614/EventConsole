@@ -8,11 +8,9 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 public class AuthenticationSuccessHandlerImpl implements AuthenticationSuccessHandler {
 
-	private final ObjectMapper objectMapper = new ObjectMapper();
+//	private final ObjectMapper objectMapper = new ObjectMapper();
 
 	@Override
 	public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,

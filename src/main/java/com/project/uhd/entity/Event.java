@@ -4,6 +4,7 @@ import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -11,10 +12,9 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
 import javax.persistence.Lob;
 import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.Table;
@@ -119,6 +119,15 @@ public class Event {
 	@Column(name = "CLOSED_BY", length = 100)
 	private String closedBy;
 
+	@Column(name = "READ_BY_ID", length = 100)
+	private String readById;
+
+	@Column(name = "RESOLVED_BY_ID", length = 100)
+	private String resolvedById;
+
+	@Column(name = "CLOSED_BY_ID", length = 100)
+	private String closedById;
+
 	@Enumerated(EnumType.STRING)
 	@Column(name = "EVENT_STATUS", nullable = false)
 	private EventStatus eventStatus = EventStatus.UNREAD;
@@ -132,8 +141,7 @@ public class Event {
 	@Column(name = "HAS_ATTACHMENT", nullable = false, length = 1)
 	private String hasAttachment = "N";
 
-	@ManyToMany
-	@JoinTable(name = "MUHD_EVENT_COMMENT", joinColumns = @JoinColumn(name = "EVENT_PK"), inverseJoinColumns = @JoinColumn(name = "COMMENT_ID"))
+	@OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
 	@JsonIgnore
 	private Set<Comment> comments = new HashSet<>();
 
@@ -347,6 +355,30 @@ public class Event {
 		this.closedAt = closedAt;
 	}
 
+	public String getReadById() {
+		return readById;
+	}
+
+	public void setReadById(String readById) {
+		this.readById = readById;
+	}
+
+	public String getResolvedById() {
+		return resolvedById;
+	}
+
+	public void setResolvedById(String resolvedById) {
+		this.resolvedById = resolvedById;
+	}
+
+	public String getClosedById() {
+		return closedById;
+	}
+
+	public void setClosedById(String closedById) {
+		this.closedById = closedById;
+	}
+
 	public EventStatus getEventStatus() {
 		return eventStatus;
 	}
@@ -381,12 +413,12 @@ public class Event {
 
 	public void addComment(Comment c) {
 		this.comments.add(c);
-		c.getEvents().add(this);
+		c.setEvent(this);
 	}
 
 	public void removeComment(Comment c) {
 		this.comments.remove(c);
-		c.getEvents().remove(this);
+		c.setEvent(null);
 	}
 
 	public Set<Case> getCases() {

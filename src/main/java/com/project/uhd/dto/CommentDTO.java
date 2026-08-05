@@ -1,6 +1,7 @@
 package com.project.uhd.dto;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import com.project.uhd.entity.Comment;
 import com.project.uhd.util.CommentStatus;
@@ -10,6 +11,8 @@ public class CommentDTO {
 	private String content;
 	private String author;
 	private LocalDateTime timestamp;
+	private OffsetDateTime updatedAt; 
+	private String authorId;
 
 	/** 非 null 時代表這則留言對應一次處理中細節子狀態的切換；前端可據此關閉編輯功能。 */
 	private CommentStatus status;
@@ -19,7 +22,9 @@ public class CommentDTO {
 		this.content = comment.getCommentContent();
 		this.author = comment.getCommentAuthor();
 		this.timestamp = comment.getCommentTimestamp();
+		this.updatedAt = comment.getUpdatedAt();
 		this.status = comment.getStatus();
+		this.authorId = comment.getCommentAuthorId();
 	}
 
 	public Long getCommentId() {
@@ -53,6 +58,14 @@ public class CommentDTO {
 	public void setTimestamp(LocalDateTime timestamp) {
 		this.timestamp = timestamp;
 	}
+	
+	public OffsetDateTime getUpdatedAt() {
+		return updatedAt;
+	}
+
+	public void setUpdatedAt(OffsetDateTime updatedAt) {
+		this.updatedAt = updatedAt;
+	}
 
 	public CommentStatus getStatus() {
 		return status;
@@ -60,5 +73,13 @@ public class CommentDTO {
 
 	public void setStatus(CommentStatus status) {
 		this.status = status;
+	}
+
+	public String getAuthorId() {
+		return authorId;
+	}
+
+	public void setAuthorId(String authorId) {
+		this.authorId = authorId;
 	}
 }

@@ -1,18 +1,19 @@
 package com.project.uhd.entity;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
+import java.time.OffsetDateTime;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.Lob;
-import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
@@ -43,11 +44,19 @@ public class Comment {
 	@Column(name = "COMMENT_TIMESTAMP")
 	private LocalDateTime commentTimestamp;
 
-	@ManyToMany(mappedBy = "comments")
-	private Set<Case> cases = new HashSet<>();
+	@Column(name = "UPDATED_AT")
+	private OffsetDateTime updatedAt;
 
-	@ManyToMany(mappedBy = "comments")
-	private Set<Event> events = new HashSet<>();
+	@Column(name = "COMMENT_AUTHOR_ID", length = 100)
+	private String commentAuthorId;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "CASE_ID")
+	private Case caze;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "EVENT_PK")
+	private Event event;
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "STATUS", length = 30)
@@ -85,27 +94,43 @@ public class Comment {
 		this.commentTimestamp = commentTimestamp;
 	}
 
+	public OffsetDateTime getUpdatedAt() {
+		return updatedAt;
+	}
+
+	public void setUpdatedAt(OffsetDateTime updatedAt) {
+		this.updatedAt = updatedAt;
+	}
+
 	public void setStatus(CommentStatus status) {
 		this.status = status;
 	}
 
-	public Set<Case> getCases() {
-		return cases;
+	public Case getCaze() {
+		return caze;
 	}
 
-	public void setCases(Set<Case> cases) {
-		this.cases = cases;
+	public void setCaze(Case caze) {
+		this.caze = caze;
 	}
 
-	public Set<Event> getEvents() {
-		return events;
+	public Event getEvent() {
+		return event;
 	}
 
-	public void setEvents(Set<Event> events) {
-		this.events = events;
+	public void setEvent(Event event) {
+		this.event = event;
 	}
 
 	public CommentStatus getStatus() {
 		return status;
+	}
+
+	public String getCommentAuthorId() {
+		return commentAuthorId;
+	}
+
+	public void setCommentAuthorId(String commentAuthorId) {
+		this.commentAuthorId = commentAuthorId;
 	}
 }

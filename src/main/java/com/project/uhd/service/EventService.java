@@ -28,7 +28,6 @@ import com.project.uhd.realtime.event.EventType;
 import com.project.uhd.realtime.service.RealtimeEventService;
 import com.project.uhd.repository.EventQueryRepository;
 import com.project.uhd.repository.EventRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.mail.Address;
 import jakarta.mail.Message.RecipientType;
@@ -49,20 +48,18 @@ public class EventService {
 	private final EventRepository eventRepository;
 	private final ModuleCodeResolver moduleCodeResolver;
 	private final EventIdGeneratorService eventIdGeneratorService;
-	private final ObjectMapper objectMapper;
 	private final AttachmentService attachmentService;
 	private final EventQueryRepository eventQueryRepository;
 	private final RealtimeEventService realtimeEventService;
 	private final CaseClassifierService caseClassifierService;
 
 	public EventService(EventRepository eventRepository, ModuleCodeResolver moduleCodeResolver,
-			EventIdGeneratorService eventIdGeneratorService, ObjectMapper objectMapper,
+			EventIdGeneratorService eventIdGeneratorService,
 			AttachmentService attachmentService, EventQueryRepository eventQueryRepository,
 			RealtimeEventService realtimeEventService, CaseClassifierService caseClassifierService) {
 		this.eventRepository = eventRepository;
 		this.moduleCodeResolver = moduleCodeResolver;
 		this.eventIdGeneratorService = eventIdGeneratorService;
-		this.objectMapper = objectMapper;
 		this.attachmentService = attachmentService;
 		this.eventQueryRepository = eventQueryRepository;
 		this.realtimeEventService = realtimeEventService;

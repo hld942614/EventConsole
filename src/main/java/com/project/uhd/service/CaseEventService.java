@@ -5,6 +5,8 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import javax.persistence.EntityManager;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,16 +38,18 @@ public class CaseEventService {
 	private final CaseRepository caseRepository;
 	private final EventStatusService eventStatusService;
 	private final EventQueryRepository eventQueryRepository;
+	private final EntityManager entityManager;
 
 	public CaseEventService(CaseEventRepository caseEventRepository, EventRepository eventRepository,
 			RealtimeEventService realtimeEventService, CaseRepository caseRepository,
-			EventStatusService eventStatusService, EventQueryRepository eventQueryRepository) {
+			EventStatusService eventStatusService, EventQueryRepository eventQueryRepository, EntityManager entityManager) {
 		this.caseEventRepository = caseEventRepository;
 		this.eventRepository = eventRepository;
 		this.realtimeEventService = realtimeEventService;
 		this.caseRepository = caseRepository;
 		this.eventStatusService = eventStatusService;
 		this.eventQueryRepository = eventQueryRepository;
+		this.entityManager = entityManager;
 	}
 
 	@Transactional
@@ -84,6 +88,7 @@ public class CaseEventService {
 
 			eventStatusService.classifyIntoCase(event);
 		}
+		entityManager.flush();
 		List<EventDTO> updatedEventDtos = eventQueryRepository.findAllByEventIdIn(filteredEventIds);
 		realtimeEventService.publish(EventType.EVENT_RECLASSIFIED, "CASE-EVENT", caseId, updatedEventDtos);
 	}
@@ -111,6 +116,7 @@ public class CaseEventService {
 					.anyMatch(ce -> !ce.getCaseId().equals(caseId));
 			eventStatusService.unclassifyFromCase(event, stillHasCase);
 		}
+		entityManager.flush();
 		List<EventDTO> updatedEventDtos = eventQueryRepository.findAllByEventIdIn(filteredEventIds);
 		realtimeEventService.publish(EventType.EVENT_RECLASSIFIED, "CASE-EVENT", caseId, updatedEventDtos);
 	}

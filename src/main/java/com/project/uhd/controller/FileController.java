@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.project.uhd.authentication.CustomUserDetails;
 import com.project.uhd.dto.ApiResponse;
 import com.project.uhd.dto.ExportDataDTO;
 import com.project.uhd.dto.UploadFileRequest;
@@ -36,8 +38,9 @@ public class FileController {
 	}
 
 	@PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	public ResponseEntity<ApiResponse<Void>> uploadFile(@ModelAttribute UploadFileRequest form) {
-		service.uploadFile(form);
+	public ResponseEntity<ApiResponse<Void>> uploadFile(@ModelAttribute UploadFileRequest form,
+			@AuthenticationPrincipal CustomUserDetails currentUser) {
+		service.uploadFile(form, currentUser);
 		return ResponseEntity.ok(new ApiResponse<>(true, "上傳成功", null));
 	}
 

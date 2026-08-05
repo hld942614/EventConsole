@@ -3,16 +3,20 @@ package com.project.uhd.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.project.uhd.authentication.CustomUserDetails;
 import com.project.uhd.dto.ApiResponse;
 import com.project.uhd.dto.CaseCommentCreateRequest;
 import com.project.uhd.dto.CommentDTO;
+import com.project.uhd.dto.CommentUpdateRequest;
 import com.project.uhd.dto.EventCommentCreateRequest;
 import com.project.uhd.dto.EventCommentSearchRequest;
 import com.project.uhd.service.CommentService;
@@ -28,8 +32,9 @@ public class CommentController {
 	}
 
 	@PostMapping("/case")
-	public ResponseEntity<ApiResponse<CommentDTO>> createCaseComment(@RequestBody CaseCommentCreateRequest request) {
-		CommentDTO created = commentService.createCaseComment(request);
+	public ResponseEntity<ApiResponse<CommentDTO>> createCaseComment(@RequestBody CaseCommentCreateRequest request,
+			@AuthenticationPrincipal CustomUserDetails currentUser) {
+		CommentDTO created = commentService.createCaseComment(request, currentUser);
 		return ResponseEntity.ok(new ApiResponse<>(true, "留言新增成功", created));
 	}
 
@@ -40,8 +45,9 @@ public class CommentController {
 	}
 
 	@PostMapping("/event")
-	public ResponseEntity<ApiResponse<CommentDTO>> createEventComment(@RequestBody EventCommentCreateRequest request) {
-		CommentDTO created = commentService.createEventComment(request);
+	public ResponseEntity<ApiResponse<CommentDTO>> createEventComment(@RequestBody EventCommentCreateRequest request,
+			@AuthenticationPrincipal CustomUserDetails currentUser) {
+		CommentDTO created = commentService.createEventComment(request, currentUser);
 		return ResponseEntity.ok(new ApiResponse<>(true, "留言新增成功", created));
 	}
 
@@ -52,17 +58,10 @@ public class CommentController {
 		return ResponseEntity.ok(new ApiResponse<>(true, "查詢成功", result));
 	}
 
-//	/** 處理中細節子狀態的時間軸歷程（只回傳有帶 processingDetailStatus 的留言，依時間排序）。 */
-//	@GetMapping("/event/{eventId}/processing-detail-history")
-//	public ResponseEntity<ApiResponse<List<CommentDTO>>> getEventProcessingDetailHistory(
-//			@PathVariable String eventId) {
-//		List<CommentDTO> result = commentService.getEventProcessingDetailHistory(eventId);
-//		return ResponseEntity.ok(new ApiResponse<>(true, "歷程查詢成功", result));
-//	}
-//
-//	@GetMapping("/case/{caseId}/processing-detail-history")
-//	public ResponseEntity<ApiResponse<List<CommentDTO>>> getCaseProcessingDetailHistory(@PathVariable Long caseId) {
-//		List<CommentDTO> result = commentService.getCaseProcessingDetailHistory(caseId);
-//		return ResponseEntity.ok(new ApiResponse<>(true, "歷程查詢成功", result));
-//	}
+	@PatchMapping("/{commentId}")
+	public ResponseEntity<ApiResponse<CommentDTO>> updateComment(@PathVariable Long commentId,
+			@RequestBody CommentUpdateRequest request, @AuthenticationPrincipal CustomUserDetails currentUser) {
+		CommentDTO updated = commentService.updateComment(commentId, request.getContent(), currentUser);
+		return ResponseEntity.ok(new ApiResponse<>(true, "留言更新成功", updated));
+	}
 }

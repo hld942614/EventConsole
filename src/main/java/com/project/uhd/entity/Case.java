@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.Entity;
@@ -15,6 +16,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
@@ -78,13 +80,17 @@ public class Case {
 	@Column(name = "CASE_CLOSED_AT")
 	private LocalDateTime closedAt;
 
-	@ManyToMany
-	@JoinTable(name = "MUHD_CASE_COMMENT", joinColumns = @JoinColumn(name = "CASE_ID"), inverseJoinColumns = @JoinColumn(name = "COMMENT_ID"))
-	private Set<Comment> comments = new HashSet<>();
+	@Column(name = "CASE_CREATOR_ID", length = 100)
+	private String creatorId;
 
-//	@ManyToMany
-//	@JoinTable(name = "MUHD_CASE_MESSAGE", joinColumns = @JoinColumn(name = "CASE_ID"), inverseJoinColumns = @JoinColumn(name = "MESSAGE_ID"))
-//	private Set<Message> messages = new HashSet<>();
+	@Column(name = "CASE_RESOLVED_BY_ID", length = 100)
+	private String resolvedById;
+
+	@Column(name = "CASE_CLOSED_BY_ID", length = 100)
+	private String closedById;
+
+	@OneToMany(mappedBy = "caze", cascade = CascadeType.ALL, orphanRemoval = true)
+	private Set<Comment> comments = new HashSet<>();
 
 	@ManyToMany
 	@JoinTable(name = "MUHD_CASE_EVENT", joinColumns = @JoinColumn(name = "CASE_ID"), inverseJoinColumns = @JoinColumn(name = "EVENT_PK"))
@@ -154,24 +160,6 @@ public class Case {
 		this.comments = comments;
 	}
 
-//	public Set<Message> getMessages() {
-//		return messages;
-//	}
-//
-//	public void setMessages(Set<Message> messages) {
-//		this.messages = messages;
-//	}
-//
-//	public void addMessage(Message message) {
-//		this.messages.add(message);
-//		message.getCases().add(this);
-//	}
-//
-//	public void removeMessage(Message message) {
-//		this.messages.remove(message);
-//		message.getCases().remove(this);
-//	}
-
 	public Boolean getRuleEnabled() {
 		return ruleEnabled;
 	}
@@ -196,14 +184,38 @@ public class Case {
 		this.updatedAt = updatedAt;
 	}
 
+	public String getCreatorId() {
+		return creatorId;
+	}
+
+	public void setCreatorId(String creatorId) {
+		this.creatorId = creatorId;
+	}
+
+	public String getResolvedById() {
+		return resolvedById;
+	}
+
+	public void setResolvedById(String resolvedById) {
+		this.resolvedById = resolvedById;
+	}
+
+	public String getClosedById() {
+		return closedById;
+	}
+
+	public void setClosedById(String closedById) {
+		this.closedById = closedById;
+	}
+
 	public void addComment(Comment c) {
 		this.comments.add(c);
-		c.getCases().add(this);
+		c.setCaze(this);
 	}
 
 	public void removeComment(Comment c) {
 		this.comments.remove(c);
-		c.getCases().remove(this);
+		c.setCaze(null);
 	}
 
 	public CaseStatus getStatus() {

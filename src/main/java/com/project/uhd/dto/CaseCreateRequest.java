@@ -5,7 +5,6 @@ public class CaseCreateRequest {
 	private String description;
 	private String logic;
 	private String conditions;
-	private String creator;
 	private Boolean ruleEnabled;
 
 	public String getName() {
@@ -38,14 +37,6 @@ public class CaseCreateRequest {
 
 	public void setConditions(String conditions) {
 		this.conditions = conditions;
-	}
-
-	public String getCreator() {
-		return creator;
-	}
-
-	public void setCreator(String creator) {
-		this.creator = creator;
 	}
 
 	public Boolean getRuleEnabled() {

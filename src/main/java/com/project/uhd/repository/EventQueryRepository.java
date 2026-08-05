@@ -79,6 +79,10 @@ public class EventQueryRepository {
 		}
 
 		dto.setValidationErrorMessage(rs.getString("VALIDATION_ERROR_MESSAGE"));
+		
+		dto.setReadById(rs.getString("READ_BY_ID"));
+		dto.setResolvedById(rs.getString("RESOLVED_BY_ID"));
+		dto.setClosedById(rs.getString("CLOSED_BY_ID"));
 
 		return dto;
 	};

@@ -18,7 +18,7 @@ import com.project.uhd.authentication.CustomUserDetails;
 public class UhdUserOidcService extends OidcUserService {
 
 	private static final Logger logger = LoggerFactory.getLogger(UhdUserOidcService.class);
-	private static final String checkPermissionErrorMessage = "Check permission for user %s failed: %s.";
+//	private static final String checkPermissionErrorMessage = "Check permission for user %s failed: %s.";
 
 	public UhdUserOidcService() {
 

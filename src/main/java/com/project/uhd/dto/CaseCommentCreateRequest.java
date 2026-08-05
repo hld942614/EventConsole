@@ -4,9 +4,7 @@ import com.project.uhd.util.CommentStatus;
 
 public class CaseCommentCreateRequest {
 	private String content;
-	private String author;
 	private Long caseId;
-
 	private CommentStatus status;
 
 	public String getContent() {
@@ -15,14 +13,6 @@ public class CaseCommentCreateRequest {
 
 	public void setContent(String content) {
 		this.content = content;
-	}
-
-	public String getAuthor() {
-		return author;
-	}
-
-	public void setAuthor(String author) {
-		this.author = author;
 	}
 
 	public Long getCaseId() {

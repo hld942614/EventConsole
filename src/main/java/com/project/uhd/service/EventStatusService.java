@@ -7,6 +7,7 @@ import javax.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.project.uhd.authentication.CustomUserDetails;
 import com.project.uhd.dto.EventDTO;
 import com.project.uhd.entity.Event;
 import com.project.uhd.enums.EventStatus;
@@ -30,15 +31,13 @@ public class EventStatusService {
 	 * 使用者「開啟事件」時呼叫。 - UNREAD -> ACKNOWLEDGED（推播 EVENT_READ
 	 */
 	@Transactional
-	public Event markAsRead(String eventId, String readBy) {
+	public Event markAsRead(String eventId, CustomUserDetails currentUser) {
 		Event event = getEventOrThrow(eventId);
-		EventStatus current = event.getEventStatus();
-
-		if (current != EventStatus.UNREAD) {
+		if (event.getEventStatus() != EventStatus.UNREAD) {
 			return event;
 		}
-
-		event.setReadBy(readBy);
+		event.setReadBy(currentUser.getChineseName());
+		event.setReadById(currentUser.getId());
 		event.setAcknowledgedAt(OffsetDateTime.now());
 		event.setEventStatus(EventStatus.ACKNOWLEDGED);
 		return saveAndPublish(event, EventType.EVENT_READ, "Event");
@@ -56,18 +55,18 @@ public class EventStatusService {
 			return;
 		}
 		event.setEventStatus(EventStatus.CLASSIFIED);
-		saveAndPublish(event, EventType.EVENT_CLASSIFIED, "Case-Event");
+//		saveAndPublish(event, EventType.EVENT_CLASSIFIED, "Case-Event");
 	}
 
 	/**
 	 * 留言時呼叫。理論上留言前必先開啟事件，這裡對 UNREAD 保留防呆 （留言動作本身視同一次已讀），推播統一用 EVENT_PROCESSING。
 	 */
 	@Transactional
-	public void ensureProcessingOnComment(Event event, String actor) {
+	public void ensureProcessingOnComment(Event event, CustomUserDetails currentUser) {
 		EventStatus current = event.getEventStatus();
-
 		if (current == EventStatus.UNREAD) {
-			event.setReadBy(actor);
+			event.setReadBy(currentUser.getChineseName());
+			event.setReadById(currentUser.getId());
 			event.setAcknowledgedAt(OffsetDateTime.now());
 			event.setEventStatus(EventStatus.PROCESSING);
 			saveAndPublish(event, EventType.EVENT_PROCESSING, "Event");
@@ -87,58 +86,58 @@ public class EventStatusService {
 			return;
 		}
 		event.setEventStatus(EventStatus.UNREAD);
-		saveAndPublish(event, EventType.EVENT_UNCLASSIFIED, "Case-Event");
+//		saveAndPublish(event, EventType.EVENT_UNCLASSIFIED, "Case-Event");
 	}
 
 	@Transactional
-	public Event resolve(String eventId, String resolvedBy) {
+	public Event resolve(String eventId, CustomUserDetails currentUser) {
 		Event event = getEventOrThrow(eventId);
 		if (!EventStatus.RESOLVED.isStrictUpgradeFrom(event.getEventStatus())) {
-			throw new IllegalStateException(
-					"不允許的狀態轉換: " + event.getEventStatus() + " -> RESOLVED (eventId=" + eventId + ")");
+			throw new IllegalStateException("不允許的狀態轉換: " + event.getEventStatus() + " -> RESOLVED (eventId=" + eventId + ")");
 		}
 		event.setResolvedAt(OffsetDateTime.now());
-		event.setResolvedBy(resolvedBy);
+		event.setResolvedBy(currentUser.getChineseName());
+		event.setResolvedById(currentUser.getId());
 		event.setEventStatus(EventStatus.RESOLVED);
 		event.setProcessingDetailStatus(CommentStatus.RESOLVED);
 		return saveAndPublish(event, EventType.EVENT_RESOLVED, "Event");
 	}
 
 	@Transactional
-	public Event close(String eventId, String closedBy) {
+	public Event close(String eventId, CustomUserDetails currentUser) {
 		Event event = getEventOrThrow(eventId);
 		if (!EventStatus.CLOSED.isStrictUpgradeFrom(event.getEventStatus())) {
-			throw new IllegalStateException(
-					"不允許的狀態轉換: " + event.getEventStatus() + " -> CLOSED (eventId=" + eventId + ")");
+			throw new IllegalStateException("不允許的狀態轉換: " + event.getEventStatus() + " -> CLOSED (eventId=" + eventId + ")");
 		}
 		event.setClosedAt(OffsetDateTime.now());
-		event.setClosedBy(closedBy);
+		event.setClosedBy(currentUser.getChineseName());
+		event.setClosedById(currentUser.getId());
 		event.setEventStatus(EventStatus.CLOSED);
 		event.setProcessingDetailStatus(CommentStatus.CLOSED);
 		return saveAndPublish(event, EventType.EVENT_CLOSED, "Event");
 	}
 
-	/** 供 Case resolve 時 cascade 呼叫：只有還在 CLASSIFIED 的事件才會被推動 */
 	@Transactional
-	public void cascadeResolveFromCase(Event event, String resolvedBy) {
+	public void cascadeResolveFromCase(Event event, CustomUserDetails currentUser) {
 		if (event.getEventStatus() != EventStatus.CLASSIFIED) {
 			return;
 		}
 		event.setResolvedAt(OffsetDateTime.now());
-		event.setResolvedBy(resolvedBy);
+		event.setResolvedBy(currentUser.getChineseName());
+		event.setResolvedById(currentUser.getId());
 		event.setEventStatus(EventStatus.RESOLVED);
 		saveAndPublish(event, EventType.EVENT_RESOLVED, "Event");
 	}
 
-	/** 供 Case close 時 cascade 呼叫：CLASSIFIED 或（已被上一步 cascade 過的）RESOLVED 都會被推動 */
 	@Transactional
-	public void cascadeCloseFromCase(Event event, String closedBy) {
+	public void cascadeCloseFromCase(Event event, CustomUserDetails currentUser) {
 		EventStatus current = event.getEventStatus();
 		if (current != EventStatus.CLASSIFIED && current != EventStatus.RESOLVED) {
 			return;
 		}
 		event.setClosedAt(OffsetDateTime.now());
-		event.setClosedBy(closedBy);
+		event.setClosedBy(currentUser.getChineseName());
+		event.setClosedById(currentUser.getId());
 		event.setEventStatus(EventStatus.CLOSED);
 		saveAndPublish(event, EventType.EVENT_CLOSED, "Event");
 	}
@@ -150,41 +149,41 @@ public class EventStatusService {
 	 * 其餘狀態（UNREAD/ACKNOWLEDGED/CLASSIFIED/INVALID）視為非法輸入。
 	 */
 	@Transactional
-	public void applyCommentStatus(Event event, EventStatus targetStatus, String actor) {
+	public void applyCommentStatus(Event event, EventStatus targetStatus, CustomUserDetails currentUser) {
 		if (targetStatus == null || targetStatus == EventStatus.PROCESSING) {
-			ensureProcessingOnComment(event, actor);
+			ensureProcessingOnComment(event, currentUser);
 			return;
 		}
 		switch (targetStatus) {
 		case RESOLVED:
-			doResolve(event, actor);
+			doResolve(event, currentUser);
 			break;
 		case CLOSED:
-			doClose(event, actor);
+			doClose(event, currentUser);
 			break;
 		default:
 			throw new IllegalArgumentException("留言無法將 Event 轉換為狀態: " + targetStatus);
 		}
 	}
 
-	private Event doResolve(Event event, String resolvedBy) {
+	private Event doResolve(Event event, CustomUserDetails currentUser) {
 		if (!EventStatus.RESOLVED.isStrictUpgradeFrom(event.getEventStatus())) {
-			throw new IllegalStateException(
-					"不允許的狀態轉換: " + event.getEventStatus() + " -> RESOLVED (eventId=" + event.getEventId() + ")");
+			throw new IllegalStateException("不允許的狀態轉換: " + event.getEventStatus() + " -> RESOLVED (eventId=" + event.getEventId() + ")");
 		}
 		event.setResolvedAt(OffsetDateTime.now());
-		event.setResolvedBy(resolvedBy);
+		event.setResolvedBy(currentUser.getChineseName());
+		event.setResolvedById(currentUser.getId());
 		event.setEventStatus(EventStatus.RESOLVED);
 		return saveAndPublish(event, EventType.EVENT_RESOLVED, "Event");
 	}
 
-	private Event doClose(Event event, String closedBy) {
+	private Event doClose(Event event, CustomUserDetails currentUser) {
 		if (!EventStatus.CLOSED.isStrictUpgradeFrom(event.getEventStatus())) {
-			throw new IllegalStateException(
-					"不允許的狀態轉換: " + event.getEventStatus() + " -> CLOSED (eventId=" + event.getEventId() + ")");
+			throw new IllegalStateException("不允許的狀態轉換: " + event.getEventStatus() + " -> CLOSED (eventId=" + event.getEventId() + ")");
 		}
 		event.setClosedAt(OffsetDateTime.now());
-		event.setClosedBy(closedBy);
+		event.setClosedBy(currentUser.getChineseName());
+		event.setClosedById(currentUser.getId());
 		event.setEventStatus(EventStatus.CLOSED);
 		return saveAndPublish(event, EventType.EVENT_CLOSED, "Event");
 	}

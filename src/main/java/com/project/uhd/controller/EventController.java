@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -12,11 +13,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.project.uhd.authentication.CustomUserDetails;
 import com.project.uhd.dto.ApiResponse;
-import com.project.uhd.dto.EventCloseRequest;
 import com.project.uhd.dto.EventDTO;
-import com.project.uhd.dto.EventReadRequest;
-import com.project.uhd.dto.EventResolveRequest;
 import com.project.uhd.dto.EventSearchRequest;
 import com.project.uhd.dto.EventStatusUpdateRequest;
 import com.project.uhd.entity.Event;
@@ -68,22 +67,22 @@ public class EventController {
 
 	@PatchMapping("/{eventId}/read")
 	public ResponseEntity<ApiResponse<EventDTO>> markAsRead(@PathVariable String eventId,
-			@RequestBody EventReadRequest request) {
-		Event event = eventStatusService.markAsRead(eventId, request.getReadBy());
+			@AuthenticationPrincipal CustomUserDetails currentUser) {
+		Event event = eventStatusService.markAsRead(eventId, currentUser);
 		return ResponseEntity.ok(new ApiResponse<>(true, "Event marked as read", new EventDTO(event)));
 	}
 
 	@PatchMapping("/{eventId}/resolve")
 	public ResponseEntity<ApiResponse<EventDTO>> resolve(@PathVariable String eventId,
-			@RequestBody EventResolveRequest request) {
-		Event event = eventStatusService.resolve(eventId, request.getResolvedBy());
+			@AuthenticationPrincipal CustomUserDetails currentUser) {
+		Event event = eventStatusService.resolve(eventId, currentUser);
 		return ResponseEntity.ok(new ApiResponse<>(true, "Event resolved", new EventDTO(event)));
 	}
 
 	@PatchMapping("/{eventId}/close")
 	public ResponseEntity<ApiResponse<EventDTO>> close(@PathVariable String eventId,
-			@RequestBody EventCloseRequest request) {
-		Event event = eventStatusService.close(eventId, request.getClosedBy());
+			@AuthenticationPrincipal CustomUserDetails currentUser) {
+		Event event = eventStatusService.close(eventId, currentUser);
 		return ResponseEntity.ok(new ApiResponse<>(true, "Event closed", new EventDTO(event)));
 	}
 }

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.project.uhd.authentication.CustomUserDetails;
 import com.project.uhd.dto.ExportDataDTO;
 import com.project.uhd.dto.FileExportDTO;
 import com.project.uhd.dto.StorageResult;
@@ -35,7 +36,7 @@ public class UploadedFileService {
 	 * 上傳 SOP PDF：落地檔名一律用 UUID 產生，允許同名檔案重複上傳而不互相覆蓋。 先落地檔案，再寫 DB metadata；DB
 	 * 寫入失敗時清掉剛落地的檔案，避免孤兒檔案。
 	 */
-	public void uploadFile(UploadFileRequest form) {
+	public void uploadFile(UploadFileRequest form, CustomUserDetails currentUser) {
 		String alertCode = form.getAlertCode();
 		if (alertCode == null || alertCode.isBlank()) {
 			throw new IllegalArgumentException("alertCode 不可為空");
@@ -46,8 +47,6 @@ public class UploadedFileService {
 			throw new IllegalArgumentException("file 不可為空");
 		}
 
-		// 顯示名稱：優先用使用者自訂名稱；沒填就退回原始上傳檔名。
-		// 這個名稱只用來顯示，不影響驗證邏輯、不影響實際存取（存取一律用 id）
 		String displayFileName = (form.getFileName() != null && !form.getFileName().isBlank()) ? form.getFileName()
 				: multipartFile.getOriginalFilename();
 
@@ -62,7 +61,8 @@ public class UploadedFileService {
 			UploadedFile entity = new UploadedFile();
 			entity.setAlertCode(alertCode);
 			entity.setDescription(form.getDescription());
-			entity.setUser(form.getUploadUser());
+			entity.setUser(currentUser.getChineseName());
+			entity.setUserId(currentUser.getId());
 			entity.setFileName(stored.getOriginalFileName());
 			entity.setStoredFileName(stored.getStoredFileName());
 			repository.save(entity);

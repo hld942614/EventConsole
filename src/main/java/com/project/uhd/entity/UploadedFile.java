@@ -50,6 +50,9 @@ public class UploadedFile {
 	@JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
 	private LocalDateTime timestamp;
 
+	@Column(name = "upload_user_id")
+	private String userId;
+
 	public Long getId() {
 		return this.id;
 	}
@@ -104,6 +107,14 @@ public class UploadedFile {
 
 	public void setTimestamp(LocalDateTime timestamp) {
 		this.timestamp = timestamp;
+	}
+
+	public String getUserId() {
+		return userId;
+	}
+
+	public void setUserId(String userId) {
+		this.userId = userId;
 	}
 
 	@Override

@@ -17,6 +17,9 @@ public class CaseDTO {
 	private String creator;
 	private String status;
 	private Boolean ruleEnabled;
+	private String creatorId;
+	private String resolvedById;
+	private String closedById;
 
 	@JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
 	private LocalDateTime createTime;
@@ -40,6 +43,7 @@ public class CaseDTO {
 		this.logic = input.getLogic();
 		this.conditions = input.getConditions();
 		this.creator = input.getCreator();
+		this.creatorId = input.getCreatorId();
 		this.status = input.getStatus() != null ? input.getStatus().name() : null;
 //		if (input.getMessages() != null) {
 //			this.messages = input.getMessages().stream().map(MessageDTO::new).collect(Collectors.toSet());
@@ -56,8 +60,10 @@ public class CaseDTO {
 		this.ruleEnabled = input.getRuleEnabled();
 
 		this.resolvedBy = input.getResolvedBy();
+		this.resolvedById = input.getResolvedById();
 		this.resolvedAt = input.getResolvedAt();
 		this.closedBy = input.getClosedBy();
+		this.closedById = input.getClosedById();
 		this.closedAt = input.getClosedAt();
 		this.processingDetailStatus = input.getProcessingDetailStatus();
 	}
@@ -196,5 +202,29 @@ public class CaseDTO {
 
 	public void setProcessingDetailStatus(CommentStatus processingDetailStatus) {
 		this.processingDetailStatus = processingDetailStatus;
+	}
+
+	public String getCreatorId() {
+		return creatorId;
+	}
+
+	public void setCreatorId(String creatorId) {
+		this.creatorId = creatorId;
+	}
+
+	public String getResolvedById() {
+		return resolvedById;
+	}
+
+	public void setResolvedById(String resolvedById) {
+		this.resolvedById = resolvedById;
+	}
+
+	public String getClosedById() {
+		return closedById;
+	}
+
+	public void setClosedById(String closedById) {
+		this.closedById = closedById;
 	}
 }
