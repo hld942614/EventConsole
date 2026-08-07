@@ -3,6 +3,7 @@ package com.project.uhd.dto;
 import java.util.List;
 
 import com.project.uhd.entity.Event;
+import com.project.uhd.entity.UploadedFile;
 import com.project.uhd.enums.EventStatus;
 import com.project.uhd.util.CommentStatus;
 import com.project.uhd.util.TimestampFormatUtil;
@@ -45,6 +46,8 @@ public class EventDTO {
 	private String validationErrorMessage; // 只有 INVALID 狀態才會有值
 
 	private CommentStatus processingDetailStatus;
+	
+	private List<UploadedFile> sopFileList;
 
 	public EventDTO() {
 	}
@@ -298,6 +301,14 @@ public class EventDTO {
 
 	public void setClosedById(String closedById) {
 		this.closedById = closedById;
+	}
+	
+	public List<UploadedFile> getSopFileList() {
+		return sopFileList;
+	}
+
+	public void setSopFileList(List<UploadedFile> sopFileList) {
+		this.sopFileList = sopFileList;
 	}
 
 	@JsonInclude(JsonInclude.Include.NON_NULL)

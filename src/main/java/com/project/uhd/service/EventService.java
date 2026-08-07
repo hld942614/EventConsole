@@ -28,6 +28,7 @@ import com.project.uhd.realtime.event.EventType;
 import com.project.uhd.realtime.service.RealtimeEventService;
 import com.project.uhd.repository.EventQueryRepository;
 import com.project.uhd.repository.EventRepository;
+import com.project.uhd.repository.UploadedFileRepository;
 
 import jakarta.mail.Address;
 import jakarta.mail.Message.RecipientType;
@@ -52,11 +53,12 @@ public class EventService {
 	private final EventQueryRepository eventQueryRepository;
 	private final RealtimeEventService realtimeEventService;
 	private final CaseClassifierService caseClassifierService;
+	private final UploadedFileRepository uploadedFileRepository;
 
 	public EventService(EventRepository eventRepository, ModuleCodeResolver moduleCodeResolver,
 			EventIdGeneratorService eventIdGeneratorService,
 			AttachmentService attachmentService, EventQueryRepository eventQueryRepository,
-			RealtimeEventService realtimeEventService, CaseClassifierService caseClassifierService) {
+			RealtimeEventService realtimeEventService, CaseClassifierService caseClassifierService, UploadedFileRepository uploadedFileRepository) {
 		this.eventRepository = eventRepository;
 		this.moduleCodeResolver = moduleCodeResolver;
 		this.eventIdGeneratorService = eventIdGeneratorService;
@@ -64,6 +66,7 @@ public class EventService {
 		this.eventQueryRepository = eventQueryRepository;
 		this.realtimeEventService = realtimeEventService;
 		this.caseClassifierService = caseClassifierService;
+		this.uploadedFileRepository = uploadedFileRepository;
 	}
 
 	/**
@@ -102,7 +105,7 @@ public class EventService {
 
 	@Transactional(readOnly = true)
 	public Optional<EventDTO> getEventDTO(String eventId) {
-		return eventQueryRepository.findByEventId(eventId);
+		return eventQueryRepository.findByEventId(eventId).map(this::attachSopFiles);
 	}
 
 	@Transactional
@@ -286,5 +289,13 @@ public class EventService {
 			e.printStackTrace();
 			return false;
 		}
+	}
+	
+	private EventDTO attachSopFiles(EventDTO dto) {
+		String alertCode = dto.getAlertCode();
+		if (alertCode != null && !alertCode.isBlank()) {
+			dto.setSopFileList(uploadedFileRepository.findByAlertCodeOrderByTimestampDesc(alertCode));
+		}
+		return dto;
 	}
 }
