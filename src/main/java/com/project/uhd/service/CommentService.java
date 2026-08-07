@@ -76,22 +76,14 @@ public class CommentService {
 
 		Comment saved = commentRepository.save(comment);
 
-		// 先讓既有的「留言即晉升」邏輯跑完（OPEN -> PROCESSING），
-		// 這樣即使是第一筆留言同時帶子狀態，晉升也會先發生，
-		// 下面套用子狀態時 target 的狀態才會是 PROCESSING。
-		caseService.ensureProcessingOnComment(target);
+		// 依 commentStatus 決定目標狀態：只有 RESOLVED/CLOSED 會跳過 PROCESSING 直接轉，
+	    // 其餘（含 null）交給 applyCommentStatus 內建的 ensureProcessingOnComment 邏輯處理。
+	    CaseStatus targetStatus = resolveTargetCaseStatus(commentStatus);
+	    caseService.applyCommentStatus(target, targetStatus, currentUser);
 
-		if (commentStatus != null) {
-			applyCaseProcessingDetail(target, commentStatus);
-		}
-
-		if (commentStatus == CommentStatus.RESOLVED) {
-			caseService.resolveCase(target.getId(), currentUser);
-		}
-
-		if (commentStatus == CommentStatus.CLOSED) {
-			caseService.closeCase(target.getId(), currentUser);
-		}
+	    if (commentStatus != null) {
+	        applyCaseProcessingDetail(target, commentStatus);
+	    }
 
 		CommentDTO dto = new CommentDTO(saved);
 		realtimeEventService.publish(EventType.COMMENT_CREATED, "CASE", target.getId(), dto);
@@ -120,17 +112,12 @@ public class CommentService {
 		target.addComment(comment);
 		Comment saved = commentRepository.save(comment);
 
-		eventStatusService.ensureProcessingOnComment(target, currentUser);
+		EventStatus targetStatus = resolveTargetEventStatus(commentStatus);
+	    eventStatusService.applyCommentStatus(target, targetStatus, currentUser);
 
-		if (commentStatus != null) {
-			applyEventProcessingDetail(target, commentStatus);
-		}
-		if (commentStatus == CommentStatus.RESOLVED) {
-			eventStatusService.resolve(target.getEventId(), currentUser);
-		}
-		if (commentStatus == CommentStatus.CLOSED) {
-			eventStatusService.close(target.getEventId(), currentUser);
-		}
+	    if (commentStatus != null) {
+	        applyEventProcessingDetail(target, commentStatus);
+	    }
 
 		CommentDTO dto = new CommentDTO(saved);
 		realtimeEventService.publish(EventType.COMMENT_CREATED, "EVENT", target.getEventId(), dto);
@@ -236,5 +223,25 @@ public class CommentService {
 		caze.setProcessingDetailStatus(commentStatus);
 		CaseDTO dto = new CaseDTO(caze);
 		realtimeEventService.publish(EventType.CASE_PROCESSING_DETAIL_UPDATED, "CASE", caze.getId(), dto);
+	}
+	
+	private EventStatus resolveTargetEventStatus(CommentStatus commentStatus) {
+	    if (commentStatus == CommentStatus.RESOLVED) {
+	        return EventStatus.RESOLVED;
+	    }
+	    if (commentStatus == CommentStatus.CLOSED) {
+	        return EventStatus.CLOSED;
+	    }
+	    return null;
+	}
+	
+	private CaseStatus resolveTargetCaseStatus(CommentStatus commentStatus) {
+	    if (commentStatus == CommentStatus.RESOLVED) {
+	        return CaseStatus.RESOLVED;
+	    }
+	    if (commentStatus == CommentStatus.CLOSED) {
+	        return CaseStatus.CLOSED;
+	    }
+	    return null;
 	}
 }

@@ -40,7 +40,7 @@ public class EventStatusService {
 		event.setReadById(currentUser.getId());
 		event.setAcknowledgedAt(OffsetDateTime.now());
 		event.setEventStatus(EventStatus.ACKNOWLEDGED);
-		return saveAndPublish(event, EventType.EVENT_READ, "Event");
+		return saveAndPublish(event, EventType.EVENT_READ, "EVENT");
 	}
 
 	/**
@@ -69,10 +69,10 @@ public class EventStatusService {
 			event.setReadById(currentUser.getId());
 			event.setAcknowledgedAt(OffsetDateTime.now());
 			event.setEventStatus(EventStatus.PROCESSING);
-			saveAndPublish(event, EventType.EVENT_PROCESSING, "Event");
+			saveAndPublish(event, EventType.EVENT_PROCESSING, "EVENT");
 		} else if (current == EventStatus.ACKNOWLEDGED) {
 			event.setEventStatus(EventStatus.PROCESSING);
-			saveAndPublish(event, EventType.EVENT_PROCESSING, "Event");
+			saveAndPublish(event, EventType.EVENT_PROCESSING, "EVENT");
 		}
 	}
 
@@ -100,7 +100,7 @@ public class EventStatusService {
 		event.setResolvedById(currentUser.getId());
 		event.setEventStatus(EventStatus.RESOLVED);
 		event.setProcessingDetailStatus(CommentStatus.RESOLVED);
-		return saveAndPublish(event, EventType.EVENT_RESOLVED, "Event");
+		return saveAndPublish(event, EventType.EVENT_RESOLVED, "EVENT");
 	}
 
 	@Transactional
@@ -114,7 +114,7 @@ public class EventStatusService {
 		event.setClosedById(currentUser.getId());
 		event.setEventStatus(EventStatus.CLOSED);
 		event.setProcessingDetailStatus(CommentStatus.CLOSED);
-		return saveAndPublish(event, EventType.EVENT_CLOSED, "Event");
+		return saveAndPublish(event, EventType.EVENT_CLOSED, "EVENT");
 	}
 
 	@Transactional
@@ -126,7 +126,7 @@ public class EventStatusService {
 		event.setResolvedBy(currentUser.getChineseName());
 		event.setResolvedById(currentUser.getId());
 		event.setEventStatus(EventStatus.RESOLVED);
-		saveAndPublish(event, EventType.EVENT_RESOLVED, "Event");
+		saveAndPublish(event, EventType.EVENT_RESOLVED, "EVENT");
 	}
 
 	@Transactional
@@ -139,7 +139,7 @@ public class EventStatusService {
 		event.setClosedBy(currentUser.getChineseName());
 		event.setClosedById(currentUser.getId());
 		event.setEventStatus(EventStatus.CLOSED);
-		saveAndPublish(event, EventType.EVENT_CLOSED, "Event");
+		saveAndPublish(event, EventType.EVENT_CLOSED, "EVENT");
 	}
 
 	/**
@@ -174,7 +174,7 @@ public class EventStatusService {
 		event.setResolvedBy(currentUser.getChineseName());
 		event.setResolvedById(currentUser.getId());
 		event.setEventStatus(EventStatus.RESOLVED);
-		return saveAndPublish(event, EventType.EVENT_RESOLVED, "Event");
+		return saveAndPublish(event, EventType.EVENT_RESOLVED, "EVENT");
 	}
 
 	private Event doClose(Event event, CustomUserDetails currentUser) {
@@ -185,7 +185,7 @@ public class EventStatusService {
 		event.setClosedBy(currentUser.getChineseName());
 		event.setClosedById(currentUser.getId());
 		event.setEventStatus(EventStatus.CLOSED);
-		return saveAndPublish(event, EventType.EVENT_CLOSED, "Event");
+		return saveAndPublish(event, EventType.EVENT_CLOSED, "EVENT");
 	}
 
 	private Event saveAndPublish(Event event, EventType type, String aggType) {
