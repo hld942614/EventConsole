@@ -112,7 +112,7 @@ public class EventService {
 	public void changeEventStatus(String eventId, EventStatus status) {
 		Event event = eventRepository.findByEventId(eventId)
 				.orElseThrow(() -> new IllegalArgumentException("Event not found: " + eventId));
-		event.setEventStatus(status);
+		event.setStatus(status);
 
 		EventDTO dto = new EventDTO(event);
 		realtimeEventService.publish(EventType.EVENT_UPDATED, "EVENT", dto.getId(), dto);
@@ -132,7 +132,6 @@ public class EventService {
 		try {
 			data = extractJsonBody(mm);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			throw new InvalidEventPayloadException("mail 本文中找不到有效 JSON 內容");
 		}
 
@@ -140,7 +139,6 @@ public class EventService {
 		try {
 			attachments = attachmentService.extractAttachments(mm);
 		} catch (Exception e) {
-			// TODO: handle exception
 			throw new InvalidEventPayloadException("attachment 解析失敗");
 		}
 

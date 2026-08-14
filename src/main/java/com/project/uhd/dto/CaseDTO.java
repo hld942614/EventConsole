@@ -5,7 +5,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.project.uhd.entity.Case;
-import com.project.uhd.util.CommentStatus;
+import com.project.uhd.enums.CommentStatus;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 public class CaseDTO {

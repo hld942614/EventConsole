@@ -9,18 +9,20 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.Lob;
-import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.Table;
 
+import com.project.uhd.enums.CommentStatus;
 import com.project.uhd.enums.EventStatus;
-import com.project.uhd.util.CommentStatus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
@@ -80,9 +82,10 @@ public class Event {
 	@Column(name = "DETAILS")
 	private String details;
 
-	@ManyToMany(mappedBy = "events")
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "CASE_ID")
 	@JsonIgnore
-	private Set<Case> cases = new HashSet<>();
+	private Case caze;
 
 	// ---- 除錯 / 稽核 ----
 	@Column(name = "RAW_JSON_PAYLOAD")
@@ -130,7 +133,7 @@ public class Event {
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "EVENT_STATUS", nullable = false)
-	private EventStatus eventStatus = EventStatus.UNREAD;
+	private EventStatus status = EventStatus.UNREAD;
 
 	@Column(name = "CREATED_AT", nullable = false)
 	private OffsetDateTime createdAt;
@@ -379,12 +382,12 @@ public class Event {
 		this.closedById = closedById;
 	}
 
-	public EventStatus getEventStatus() {
-		return eventStatus;
+	public EventStatus getStatus() {
+		return status;
 	}
 
-	public void setEventStatus(EventStatus eventStatus) {
-		this.eventStatus = eventStatus;
+	public void setStatus(EventStatus status) {
+		this.status = status;
 	}
 
 	public OffsetDateTime getCreatedAt() {
@@ -421,12 +424,12 @@ public class Event {
 		c.setEvent(null);
 	}
 
-	public Set<Case> getCases() {
-		return cases;
+	public Case getCaze() {
+		return caze;
 	}
 
-	public void setCases(Set<Case> cases) {
-		this.cases = cases;
+	public void setCaze(Case caze) {
+		this.caze = caze;
 	}
 
 	public String getReadBy() {

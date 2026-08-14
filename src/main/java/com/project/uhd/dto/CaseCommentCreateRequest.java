@@ -1,6 +1,6 @@
 package com.project.uhd.dto;
 
-import com.project.uhd.util.CommentStatus;
+import com.project.uhd.enums.CommentStatus;
 
 public class CaseCommentCreateRequest {
 	private String content;

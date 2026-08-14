@@ -19,8 +19,8 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import com.project.uhd.dto.EventDTO;
+import com.project.uhd.enums.CommentStatus;
 import com.project.uhd.enums.EventStatus;
-import com.project.uhd.util.CommentStatus;
 import com.project.uhd.util.TimestampFormatUtil;
 
 @Repository
@@ -38,9 +38,9 @@ public class EventQueryRepository {
 		dto.setId(rs.getLong("ID"));
 		dto.setEventId(rs.getString("EVENT_ID"));
 
-		String status = rs.getString("EVENT_STATUS");
-		if (status != null) {
-			dto.setEventStatus(EventStatus.valueOf(status.toUpperCase()));
+		String statusStr = rs.getString("EVENT_STATUS");
+		if (statusStr != null) {
+			dto.setStatus(EventStatus.valueOf(statusStr.toUpperCase()));
 		}
 		dto.setModuleCode(rs.getString("MODULE_CODE"));
 		dto.setHasAttachment("Y".equalsIgnoreCase(rs.getString("HAS_ATTACHMENT")));
@@ -87,27 +87,13 @@ public class EventQueryRepository {
 		return dto;
 	};
 
-	/** DETAILS 存的是 CLOB JSON 字串，這裡解析成 List；解析失敗不影響其他欄位，details 就回 null */
-//	private static List<Map<String, Object>> parseDetails(String json) {
-//		if (json == null || json.isBlank()) {
-//			return null;
-//		}
-//		try {
-//			return OBJECT_MAPPER.readValue(json, new TypeReference<List<Map<String, Object>>>() {
-//			});
-//		} catch (Exception e) {
-//			return null;
-//		}
-//	}
-
 	public List<EventDTO> getEventsByFilters(List<EventStatus> statusArray, String subject, String moduleCode,
 			String sender, String content, String startDay, String endDay) {
 
 		String baseSql = """
 				SELECT e.*,
-				       (SELECT COUNT(*) FROM MUHD.MUHD_CASE_EVENT cex WHERE cex.EVENT_PK = e.ID) AS CASE_COUNT,
-				       (SELECT LISTAGG(TO_CHAR(cex.CASE_ID), ',') WITHIN GROUP (ORDER BY cex.CASE_ID)
-				          FROM MUHD.MUHD_CASE_EVENT cex WHERE cex.EVENT_PK = e.ID) AS CASE_IDS
+					CASE WHEN e.CASE_ID IS NOT NULL THEN 1 ELSE 0 END AS CASE_COUNT,
+					TO_CHAR(e.CASE_ID) AS CASE_IDS
 				FROM MUHD_EVENT e
 				""";
 
@@ -183,12 +169,10 @@ public class EventQueryRepository {
 	public List<EventDTO> findEventsByCaseId(Long caseId) {
 		String sql = """
 				SELECT e.*,
-				       (SELECT COUNT(*) FROM MUHD.MUHD_CASE_EVENT cex WHERE cex.EVENT_PK = e.ID) AS CASE_COUNT,
-				       (SELECT LISTAGG(TO_CHAR(cex.CASE_ID), ',') WITHIN GROUP (ORDER BY cex.CASE_ID)
-				          FROM MUHD.MUHD_CASE_EVENT cex WHERE cex.EVENT_PK = e.ID) AS CASE_IDS
-				FROM MUHD_CASE_EVENT ce
-				JOIN MUHD_EVENT e ON e.ID = ce.EVENT_PK
-				WHERE ce.CASE_ID = :caseId
+				       CASE WHEN e.CASE_ID IS NOT NULL THEN 1 ELSE 0 END AS CASE_COUNT,
+				       TO_CHAR(e.CASE_ID) AS CASE_IDS
+				FROM MUHD_EVENT e
+				WHERE e.CASE_ID = :caseId
 				ORDER BY e.OCCURRED_AT DESC
 				""";
 
@@ -198,9 +182,8 @@ public class EventQueryRepository {
 	public Optional<EventDTO> findByEventId(String eventId) {
 		String sql = """
 				SELECT e.*,
-				       (SELECT COUNT(*) FROM MUHD.MUHD_CASE_EVENT cex WHERE cex.EVENT_PK = e.ID) AS CASE_COUNT,
-				       (SELECT LISTAGG(TO_CHAR(cex.CASE_ID), ',') WITHIN GROUP (ORDER BY cex.CASE_ID)
-				          FROM MUHD.MUHD_CASE_EVENT cex WHERE cex.EVENT_PK = e.ID) AS CASE_IDS
+				       CASE WHEN e.CASE_ID IS NOT NULL THEN 1 ELSE 0 END AS CASE_COUNT,
+				       TO_CHAR(e.CASE_ID) AS CASE_IDS
 				FROM MUHD_EVENT e
 				WHERE e.EVENT_ID = :eventId
 				""";
@@ -216,10 +199,9 @@ public class EventQueryRepository {
 
 	    String sql = """
 	            SELECT e.*,
-	                   (SELECT COUNT(*) FROM MUHD.MUHD_CASE_EVENT cex WHERE cex.EVENT_PK = e.ID) AS CASE_COUNT,
-	                   (SELECT LISTAGG(TO_CHAR(cex.CASE_ID), ',') WITHIN GROUP (ORDER BY cex.CASE_ID)
-	                      FROM MUHD.MUHD_CASE_EVENT cex WHERE cex.EVENT_PK = e.ID) AS CASE_IDS
-	            FROM MUHD_EVENT e
+				       CASE WHEN e.CASE_ID IS NOT NULL THEN 1 ELSE 0 END AS CASE_COUNT,
+				       TO_CHAR(e.CASE_ID) AS CASE_IDS
+				FROM MUHD_EVENT e
 	            WHERE e.EVENT_ID IN (:eventIds)
 	            """;
 

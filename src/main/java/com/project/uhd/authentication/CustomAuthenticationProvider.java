@@ -5,7 +5,6 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,8 +20,6 @@ import com.project.uhd.service.UserLoginLogService;
 public class CustomAuthenticationProvider implements AuthenticationProvider {
 
 	private static final Logger logger = LogManager.getLogger(CustomAuthenticationProvider.class);
-	@Value("${ad.login.sever}")
-	private String apiServer;
 	
 	private AdService adService;
 	private UserLoginLogService userLoginLogService;

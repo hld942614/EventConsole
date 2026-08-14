@@ -20,6 +20,7 @@ import com.project.uhd.entity.Case;
 import com.project.uhd.entity.Comment;
 import com.project.uhd.entity.Event;
 import com.project.uhd.enums.CaseStatus;
+import com.project.uhd.enums.CommentStatus;
 import com.project.uhd.enums.EventStatus;
 import com.project.uhd.exception.ForbiddenOperationException;
 import com.project.uhd.realtime.event.EventType;
@@ -27,16 +28,17 @@ import com.project.uhd.realtime.service.RealtimeEventService;
 import com.project.uhd.repository.CaseRepository;
 import com.project.uhd.repository.CommentRepository;
 import com.project.uhd.repository.EventRepository;
-import com.project.uhd.util.CommentStatus;
 
 @Service
 public class CommentService {
 
 	/** 切換子狀態時，若前端沒帶自訂內容，落地用的預設留言文字。 */
-	private static final Map<CommentStatus, String> DEFAULT_COMMENT_TEXT = Map.of(CommentStatus.TRANSFERRED_TO_PIC,
-			"[已轉交 PIC] 已通知負責人，等待對方回應", CommentStatus.INVESTIGATING, "[調查中] 正在排查與分析原因", CommentStatus.WAITING_VENDOR,
-			"[等待廠商] 正在等待外部支援或原廠回覆", CommentStatus.FIXING, "[修復中] 正在動手調整或套用解法", CommentStatus.VERIFYING,
-			"[觀察驗證] 已處理完畢，正在確認系統穩定度");
+	private static final Map<CommentStatus, String> DEFAULT_COMMENT_TEXT = Map.of(
+			CommentStatus.TRANSFERRED_TO_PIC,"[已轉交 PIC] 已通知負責人，等待對方回應", 
+			CommentStatus.INVESTIGATING, "[調查中] 正在排查與分析原因", 
+			CommentStatus.WAITING_VENDOR,"[等待廠商] 正在等待外部支援或原廠回覆", 
+			CommentStatus.FIXING, "[修復中] 正在動手調整或套用解法", 
+			CommentStatus.VERIFYING,"[觀察驗證] 已處理完畢，正在確認系統穩定度");
 
 	private final CommentRepository commentRepository;
 	private final CaseRepository caseRepository;
@@ -44,16 +46,18 @@ public class CommentService {
 	private final EventRepository eventRepository;
 	private final EventStatusService eventStatusService;
 	private final CaseService caseService;
+	private final CommentDraftService commentDraftService;
 
 	public CommentService(CommentRepository commentRepository, CaseRepository caseRepository,
 			RealtimeEventService realtimeEventService, EventRepository eventRepository,
-			EventStatusService eventStatusService, CaseService caseService) {
+			EventStatusService eventStatusService, CaseService caseService, CommentDraftService commentDraftService) {
 		this.commentRepository = commentRepository;
 		this.caseRepository = caseRepository;
 		this.realtimeEventService = realtimeEventService;
 		this.eventRepository = eventRepository;
 		this.eventStatusService = eventStatusService;
 		this.caseService = caseService;
+		this.commentDraftService = commentDraftService;
 	}
 
 	@Transactional
@@ -87,6 +91,7 @@ public class CommentService {
 
 		CommentDTO dto = new CommentDTO(saved);
 		realtimeEventService.publish(EventType.COMMENT_CREATED, "CASE", target.getId(), dto);
+		commentDraftService.deleteCaseDraft(target.getId(), currentUser);
 		return dto;
 	}
 
@@ -95,7 +100,7 @@ public class CommentService {
 		Event target = eventRepository.findByEventId(request.getEventId())
 				.orElseThrow(() -> new NoSuchElementException("Event not found: " + request.getEventId()));
 
-		if (target.getEventStatus() == EventStatus.CLASSIFIED) {
+		if (target.getStatus() == EventStatus.CLASSIFIED) {
 			throw new IllegalStateException("此事件已分類至 Case，請至對應 Case 頁面留言: eventId=" + request.getEventId());
 		}
 
@@ -121,6 +126,7 @@ public class CommentService {
 
 		CommentDTO dto = new CommentDTO(saved);
 		realtimeEventService.publish(EventType.COMMENT_CREATED, "EVENT", target.getEventId(), dto);
+		commentDraftService.deleteEventDraft(target.getId(), currentUser);
 		return dto;
 	}
 
@@ -208,7 +214,7 @@ public class CommentService {
 	 * 這種終態，這種情況下不允許再切換處理中細節子狀態，是合理的例外。
 	 */
 	private void applyEventProcessingDetail(Event event, CommentStatus detailStatus) {
-		if (event.getEventStatus() != EventStatus.PROCESSING) {
+		if (event.getStatus() != EventStatus.PROCESSING) {
 			return;
 		}
 		event.setProcessingDetailStatus(detailStatus);

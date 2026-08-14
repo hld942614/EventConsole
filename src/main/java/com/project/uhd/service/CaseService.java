@@ -24,7 +24,6 @@ import com.project.uhd.realtime.event.EventType;
 import com.project.uhd.realtime.service.RealtimeEventService;
 import com.project.uhd.repository.CaseRepository;
 import com.project.uhd.repository.EventQueryRepository;
-import com.project.uhd.util.CommentStatus;
 
 @Service
 public class CaseService {
@@ -167,7 +166,7 @@ public class CaseService {
 		}
 
 		existingCase.setStatus(CaseStatus.RESOLVED);
-		existingCase.setProcessingDetailStatus(CommentStatus.RESOLVED);
+		existingCase.setProcessingDetailStatus(null);
 		existingCase.setResolvedBy(currentUser.getChineseName());
 		existingCase.setResolvedById(currentUser.getId());
 		existingCase.setResolvedAt(LocalDateTime.now());
@@ -192,7 +191,7 @@ public class CaseService {
 		}
 
 		existingCase.setStatus(CaseStatus.CLOSED);
-		existingCase.setProcessingDetailStatus(CommentStatus.CLOSED);
+		existingCase.setProcessingDetailStatus(null);
 		existingCase.setClosedBy(currentUser.getChineseName());
 		existingCase.setClosedById(currentUser.getId());
 		existingCase.setClosedAt(LocalDateTime.now());

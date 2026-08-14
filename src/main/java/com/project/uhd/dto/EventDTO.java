@@ -4,8 +4,8 @@ import java.util.List;
 
 import com.project.uhd.entity.Event;
 import com.project.uhd.entity.UploadedFile;
+import com.project.uhd.enums.CommentStatus;
 import com.project.uhd.enums.EventStatus;
-import com.project.uhd.util.CommentStatus;
 import com.project.uhd.util.TimestampFormatUtil;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonRawValue;
@@ -15,7 +15,7 @@ public class EventDTO {
 
 	private Long id;
 	private String eventId;
-	private EventStatus eventStatus;
+	private EventStatus status;
 	private String moduleCode;
 	private Boolean hasAttachment;
 
@@ -55,7 +55,7 @@ public class EventDTO {
 	public EventDTO(Event event) {
 		this.id = event.getId();
 		this.eventId = event.getEventId();
-		this.eventStatus = event.getEventStatus();
+		this.status = event.getStatus();
 		this.moduleCode = event.getModuleCode();
 		this.hasAttachment = "Y".equalsIgnoreCase(event.getHasAttachment());
 		this.alertCode = event.getAlertCode();
@@ -103,12 +103,12 @@ public class EventDTO {
 		this.eventId = eventId;
 	}
 
-	public EventStatus getEventStatus() {
-		return eventStatus;
+	public EventStatus getStatus() {
+		return status;
 	}
 
-	public void setEventStatus(EventStatus eventStatus) {
-		this.eventStatus = eventStatus;
+	public void setStatus(EventStatus status) {
+		this.status = status;
 	}
 
 	public String getModuleCode() {

@@ -30,4 +30,6 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 			     where e.eventId=:eventId
 			""")
 	void updateHasAttachment(@Param("eventId") String eventId);
+	
+	List<Event> findByCaze_Id(Long caseId);
 }

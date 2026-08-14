@@ -13,9 +13,6 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -23,7 +20,7 @@ import javax.persistence.Table;
 import org.json.JSONObject;
 
 import com.project.uhd.enums.CaseStatus;
-import com.project.uhd.util.CommentStatus;
+import com.project.uhd.enums.CommentStatus;
 import com.project.uhd.util.YesNoToBooleanConverter;
 
 import lombok.AllArgsConstructor;
@@ -92,8 +89,7 @@ public class Case {
 	@OneToMany(mappedBy = "caze", cascade = CascadeType.ALL, orphanRemoval = true)
 	private Set<Comment> comments = new HashSet<>();
 
-	@ManyToMany
-	@JoinTable(name = "MUHD_CASE_EVENT", joinColumns = @JoinColumn(name = "CASE_ID"), inverseJoinColumns = @JoinColumn(name = "EVENT_PK"))
+	@OneToMany(mappedBy = "caze")
 	private Set<Event> events = new HashSet<>();
 
 	@Enumerated(EnumType.STRING)
@@ -236,12 +232,12 @@ public class Case {
 
 	public void addEvent(Event event) {
 		this.events.add(event);
-		event.getCases().add(this);
+		event.setCaze(this);
 	}
 
 	public void removeEvent(Event event) {
 		this.events.remove(event);
-		event.getCases().remove(this);
+		event.setCaze(null);
 	}
 
 	public String getResolvedBy() {

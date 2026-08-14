@@ -17,7 +17,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
-import com.project.uhd.util.CommentStatus;
+import com.project.uhd.enums.CommentStatus;
 
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;

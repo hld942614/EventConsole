@@ -12,14 +12,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.project.uhd.dto.EventDTO;
 import com.project.uhd.entity.Case;
-import com.project.uhd.entity.CaseEvent;
-import com.project.uhd.entity.CaseEventId;
 import com.project.uhd.entity.Event;
 import com.project.uhd.enums.CaseStatus;
 import com.project.uhd.enums.EventStatus;
 import com.project.uhd.realtime.event.EventType;
 import com.project.uhd.realtime.service.RealtimeEventService;
-import com.project.uhd.repository.CaseEventRepository;
 import com.project.uhd.repository.CaseRepository;
 import com.project.uhd.repository.EventQueryRepository;
 import com.project.uhd.repository.EventRepository;
@@ -32,7 +29,6 @@ import com.project.uhd.repository.EventRepository;
 @Service
 public class CaseEventService {
 
-	private final CaseEventRepository caseEventRepository;
 	private final EventRepository eventRepository;
 	private final RealtimeEventService realtimeEventService;
 	private final CaseRepository caseRepository;
@@ -40,10 +36,9 @@ public class CaseEventService {
 	private final EventQueryRepository eventQueryRepository;
 	private final EntityManager entityManager;
 
-	public CaseEventService(CaseEventRepository caseEventRepository, EventRepository eventRepository,
+	public CaseEventService(EventRepository eventRepository,
 			RealtimeEventService realtimeEventService, CaseRepository caseRepository,
 			EventStatusService eventStatusService, EventQueryRepository eventQueryRepository, EntityManager entityManager) {
-		this.caseEventRepository = caseEventRepository;
 		this.eventRepository = eventRepository;
 		this.realtimeEventService = realtimeEventService;
 		this.caseRepository = caseRepository;
@@ -80,12 +75,16 @@ public class CaseEventService {
 			throw new NoSuchElementException("Event not found: " + notFound);
 		}
 
-		for (Event event : foundEvents) {
-			CaseEventId id = new CaseEventId(caseId, event.getId());
-			if (!caseEventRepository.existsById(id)) {
-				caseEventRepository.save(new CaseEvent(caseId, event.getId()));
-			}
+		List<String> alreadyClassified = foundEvents.stream()
+				.filter(e -> e.getCaze() != null && !e.getCaze().getId().equals(caseId))
+				.map(e -> e.getEventId() + " (Case #" + e.getCaze().getId() + ")")
+				.collect(Collectors.toList());
+		if (!alreadyClassified.isEmpty()) {
+			throw new IllegalStateException("以下事件已分類至其他 Case，請先移除後再加入: " + alreadyClassified);
+		}
 
+		for (Event event : foundEvents) {
+			event.setCaze(targetCase);
 			eventStatusService.classifyIntoCase(event);
 		}
 		entityManager.flush();
@@ -105,36 +104,22 @@ public class CaseEventService {
 
 		List<Event> foundEvents = eventRepository.findAllByEventIdIn(filteredEventIds);
 
-		List<CaseEventId> ids = foundEvents.stream().map(e -> new CaseEventId(caseId, e.getId()))
-				.collect(Collectors.toList());
-
-		caseEventRepository.deleteAllByIdInBatch(ids);
-
-		// 逐一檢查移出這個 Case 後，是否還屬於其他 Case
 		for (Event event : foundEvents) {
-			boolean stillHasCase = caseEventRepository.findByEventId(event.getId()).stream()
-					.anyMatch(ce -> !ce.getCaseId().equals(caseId));
-			eventStatusService.unclassifyFromCase(event, stillHasCase);
+			if (event.getCaze() != null && event.getCaze().getId().equals(caseId)) {
+				event.setCaze(null);
+				eventStatusService.unclassifyFromCase(event);
+			}
 		}
 		entityManager.flush();
 		List<EventDTO> updatedEventDtos = eventQueryRepository.findAllByEventIdIn(filteredEventIds);
 		realtimeEventService.publish(EventType.EVENT_RECLASSIFIED, "CASE-EVENT", caseId, updatedEventDtos);
 	}
 
-	public List<CaseEvent> getEventsByCaseId(Long caseId) {
-		return caseEventRepository.findByCaseId(caseId);
-	}
-
 	@Transactional
 	public void updateEventsStatusByCaseId(Long caseId, EventStatus targetStatus) {
-		List<CaseEvent> relations = caseEventRepository.findByCaseId(caseId);
-		if (relations.isEmpty()) {
-			return;
-		}
-		List<Long> eventPks = relations.stream().map(CaseEvent::getEventId).distinct().collect(Collectors.toList());
-		List<Event> events = eventRepository.findAllById(eventPks);
+		List<Event> events = eventRepository.findByCaze_Id(caseId);
 		for (Event e : events) {
-			e.setEventStatus(targetStatus);
+			e.setStatus(targetStatus);
 		}
 	}
 }

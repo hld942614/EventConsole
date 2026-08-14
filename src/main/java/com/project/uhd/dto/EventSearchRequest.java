@@ -2,8 +2,8 @@ package com.project.uhd.dto;
 
 import java.util.List;
 
+import com.project.uhd.enums.CommentStatus;
 import com.project.uhd.enums.EventStatus;
-import com.project.uhd.util.CommentStatus;
 
 public class EventSearchRequest {
 	private List<EventStatus> statusArray;

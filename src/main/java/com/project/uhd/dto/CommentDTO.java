@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 
 import com.project.uhd.entity.Comment;
-import com.project.uhd.util.CommentStatus;
+import com.project.uhd.enums.CommentStatus;
 
 public class CommentDTO {
 	private Long commentId;

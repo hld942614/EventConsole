@@ -14,7 +14,6 @@ import com.project.uhd.enums.EventStatus;
 import com.project.uhd.realtime.event.EventType;
 import com.project.uhd.realtime.service.RealtimeEventService;
 import com.project.uhd.repository.EventRepository;
-import com.project.uhd.util.CommentStatus;
 
 @Service
 public class EventStatusService {
@@ -33,13 +32,13 @@ public class EventStatusService {
 	@Transactional
 	public Event markAsRead(String eventId, CustomUserDetails currentUser) {
 		Event event = getEventOrThrow(eventId);
-		if (event.getEventStatus() != EventStatus.UNREAD) {
+		if (event.getStatus() != EventStatus.UNREAD) {
 			return event;
 		}
 		event.setReadBy(currentUser.getChineseName());
 		event.setReadById(currentUser.getId());
 		event.setAcknowledgedAt(OffsetDateTime.now());
-		event.setEventStatus(EventStatus.ACKNOWLEDGED);
+		event.setStatus(EventStatus.ACKNOWLEDGED);
 		return saveAndPublish(event, EventType.EVENT_READ, "EVENT");
 	}
 
@@ -50,11 +49,11 @@ public class EventStatusService {
 	 */
 	@Transactional
 	public void classifyIntoCase(Event event) {
-		EventStatus current = event.getEventStatus();
+		EventStatus current = event.getStatus();
 		if (current == EventStatus.RESOLVED || current == EventStatus.CLOSED || current == EventStatus.CLASSIFIED) {
 			return;
 		}
-		event.setEventStatus(EventStatus.CLASSIFIED);
+		event.setStatus(EventStatus.CLASSIFIED);
 //		saveAndPublish(event, EventType.EVENT_CLASSIFIED, "Case-Event");
 	}
 
@@ -63,15 +62,15 @@ public class EventStatusService {
 	 */
 	@Transactional
 	public void ensureProcessingOnComment(Event event, CustomUserDetails currentUser) {
-		EventStatus current = event.getEventStatus();
+		EventStatus current = event.getStatus();
 		if (current == EventStatus.UNREAD) {
 			event.setReadBy(currentUser.getChineseName());
 			event.setReadById(currentUser.getId());
 			event.setAcknowledgedAt(OffsetDateTime.now());
-			event.setEventStatus(EventStatus.PROCESSING);
+			event.setStatus(EventStatus.PROCESSING);
 			saveAndPublish(event, EventType.EVENT_PROCESSING, "EVENT");
 		} else if (current == EventStatus.ACKNOWLEDGED) {
-			event.setEventStatus(EventStatus.PROCESSING);
+			event.setStatus(EventStatus.PROCESSING);
 			saveAndPublish(event, EventType.EVENT_PROCESSING, "EVENT");
 		}
 	}
@@ -81,64 +80,65 @@ public class EventStatusService {
 	 * 過）的事件才重置回 UNREAD； 若已經被 cascade 成 RESOLVED/CLOSED，維持原狀不動。
 	 */
 	@Transactional
-	public void unclassifyFromCase(Event event, boolean stillHasCase) {
-		if (stillHasCase || event.getEventStatus() != EventStatus.CLASSIFIED) {
+	public void unclassifyFromCase(Event event) {
+		if (event.getStatus() != EventStatus.CLASSIFIED) {
 			return;
 		}
-		event.setEventStatus(EventStatus.UNREAD);
-//		saveAndPublish(event, EventType.EVENT_UNCLASSIFIED, "Case-Event");
+		event.setStatus(EventStatus.UNREAD);
 	}
 
 	@Transactional
 	public Event resolve(String eventId, CustomUserDetails currentUser) {
 		Event event = getEventOrThrow(eventId);
-		if (!EventStatus.RESOLVED.isStrictUpgradeFrom(event.getEventStatus())) {
-			throw new IllegalStateException("不允許的狀態轉換: " + event.getEventStatus() + " -> RESOLVED (eventId=" + eventId + ")");
+		if (!EventStatus.RESOLVED.isStrictUpgradeFrom(event.getStatus())) {
+			throw new IllegalStateException("不允許的狀態轉換: " + event.getStatus() + " -> RESOLVED (eventId=" + eventId + ")");
 		}
 		event.setResolvedAt(OffsetDateTime.now());
 		event.setResolvedBy(currentUser.getChineseName());
 		event.setResolvedById(currentUser.getId());
-		event.setEventStatus(EventStatus.RESOLVED);
-		event.setProcessingDetailStatus(CommentStatus.RESOLVED);
+		event.setStatus(EventStatus.RESOLVED);
+		event.setProcessingDetailStatus(null);
 		return saveAndPublish(event, EventType.EVENT_RESOLVED, "EVENT");
 	}
 
 	@Transactional
 	public Event close(String eventId, CustomUserDetails currentUser) {
 		Event event = getEventOrThrow(eventId);
-		if (!EventStatus.CLOSED.isStrictUpgradeFrom(event.getEventStatus())) {
-			throw new IllegalStateException("不允許的狀態轉換: " + event.getEventStatus() + " -> CLOSED (eventId=" + eventId + ")");
+		if (!EventStatus.CLOSED.isStrictUpgradeFrom(event.getStatus())) {
+			throw new IllegalStateException("不允許的狀態轉換: " + event.getStatus() + " -> CLOSED (eventId=" + eventId + ")");
 		}
 		event.setClosedAt(OffsetDateTime.now());
 		event.setClosedBy(currentUser.getChineseName());
 		event.setClosedById(currentUser.getId());
-		event.setEventStatus(EventStatus.CLOSED);
-		event.setProcessingDetailStatus(CommentStatus.CLOSED);
+		event.setStatus(EventStatus.CLOSED);
+		event.setProcessingDetailStatus(null);
 		return saveAndPublish(event, EventType.EVENT_CLOSED, "EVENT");
 	}
 
 	@Transactional
 	public void cascadeResolveFromCase(Event event, CustomUserDetails currentUser) {
-		if (event.getEventStatus() != EventStatus.CLASSIFIED) {
+		if (event.getStatus() != EventStatus.CLASSIFIED) {
 			return;
 		}
 		event.setResolvedAt(OffsetDateTime.now());
 		event.setResolvedBy(currentUser.getChineseName());
 		event.setResolvedById(currentUser.getId());
-		event.setEventStatus(EventStatus.RESOLVED);
+		event.setStatus(EventStatus.RESOLVED);
+		event.setProcessingDetailStatus(null);
 		saveAndPublish(event, EventType.EVENT_RESOLVED, "EVENT");
 	}
 
 	@Transactional
 	public void cascadeCloseFromCase(Event event, CustomUserDetails currentUser) {
-		EventStatus current = event.getEventStatus();
+		EventStatus current = event.getStatus();
 		if (current != EventStatus.CLASSIFIED && current != EventStatus.RESOLVED) {
 			return;
 		}
 		event.setClosedAt(OffsetDateTime.now());
 		event.setClosedBy(currentUser.getChineseName());
 		event.setClosedById(currentUser.getId());
-		event.setEventStatus(EventStatus.CLOSED);
+		event.setStatus(EventStatus.CLOSED);
+		event.setProcessingDetailStatus(null);
 		saveAndPublish(event, EventType.EVENT_CLOSED, "EVENT");
 	}
 
@@ -167,24 +167,26 @@ public class EventStatusService {
 	}
 
 	private Event doResolve(Event event, CustomUserDetails currentUser) {
-		if (!EventStatus.RESOLVED.isStrictUpgradeFrom(event.getEventStatus())) {
-			throw new IllegalStateException("不允許的狀態轉換: " + event.getEventStatus() + " -> RESOLVED (eventId=" + event.getEventId() + ")");
+		if (!EventStatus.RESOLVED.isStrictUpgradeFrom(event.getStatus())) {
+			throw new IllegalStateException("不允許的狀態轉換: " + event.getStatus() + " -> RESOLVED (eventId=" + event.getEventId() + ")");
 		}
 		event.setResolvedAt(OffsetDateTime.now());
 		event.setResolvedBy(currentUser.getChineseName());
 		event.setResolvedById(currentUser.getId());
-		event.setEventStatus(EventStatus.RESOLVED);
+		event.setStatus(EventStatus.RESOLVED);
+		event.setProcessingDetailStatus(null);
 		return saveAndPublish(event, EventType.EVENT_RESOLVED, "EVENT");
 	}
 
 	private Event doClose(Event event, CustomUserDetails currentUser) {
-		if (!EventStatus.CLOSED.isStrictUpgradeFrom(event.getEventStatus())) {
-			throw new IllegalStateException("不允許的狀態轉換: " + event.getEventStatus() + " -> CLOSED (eventId=" + event.getEventId() + ")");
+		if (!EventStatus.CLOSED.isStrictUpgradeFrom(event.getStatus())) {
+			throw new IllegalStateException("不允許的狀態轉換: " + event.getStatus() + " -> CLOSED (eventId=" + event.getEventId() + ")");
 		}
 		event.setClosedAt(OffsetDateTime.now());
 		event.setClosedBy(currentUser.getChineseName());
 		event.setClosedById(currentUser.getId());
-		event.setEventStatus(EventStatus.CLOSED);
+		event.setStatus(EventStatus.CLOSED);
+		event.setProcessingDetailStatus(null);
 		return saveAndPublish(event, EventType.EVENT_CLOSED, "EVENT");
 	}
 
