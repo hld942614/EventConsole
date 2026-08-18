@@ -5,7 +5,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.project.uhd.entity.Case;
-import com.project.uhd.enums.CommentStatus;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 public class CaseDTO {
@@ -18,23 +17,13 @@ public class CaseDTO {
 	private String status;
 	private Boolean ruleEnabled;
 	private String creatorId;
-	private String resolvedById;
-	private String closedById;
 
 	@JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
 	private LocalDateTime createTime;
 
-	private String resolvedBy;
-	@JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
-	private LocalDateTime resolvedAt;
-	private String closedBy;
-	@JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
-	private LocalDateTime closedAt;
-
 //	private Set<MessageDTO> messages;
 	private Set<CommentDTO> comments;
 	private Set<EventDTO> events;
-	private CommentStatus processingDetailStatus;
 
 	public CaseDTO(Case input) {
 		this.id = input.getId();
@@ -58,14 +47,6 @@ public class CaseDTO {
 		}
 		this.createTime = input.getCreatedAt();
 		this.ruleEnabled = input.getRuleEnabled();
-
-		this.resolvedBy = input.getResolvedBy();
-		this.resolvedById = input.getResolvedById();
-		this.resolvedAt = input.getResolvedAt();
-		this.closedBy = input.getClosedBy();
-		this.closedById = input.getClosedById();
-		this.closedAt = input.getClosedAt();
-		this.processingDetailStatus = input.getProcessingDetailStatus();
 	}
 
 	public Long getId() {
@@ -164,67 +145,11 @@ public class CaseDTO {
 		this.events = events;
 	}
 
-	public String getResolvedBy() {
-		return resolvedBy;
-	}
-
-	public void setResolvedBy(String resolvedBy) {
-		this.resolvedBy = resolvedBy;
-	}
-
-	public LocalDateTime getResolvedAt() {
-		return resolvedAt;
-	}
-
-	public void setResolvedAt(LocalDateTime resolvedAt) {
-		this.resolvedAt = resolvedAt;
-	}
-
-	public String getClosedBy() {
-		return closedBy;
-	}
-
-	public void setClosedBy(String closedBy) {
-		this.closedBy = closedBy;
-	}
-
-	public LocalDateTime getClosedAt() {
-		return closedAt;
-	}
-
-	public void setClosedAt(LocalDateTime closedAt) {
-		this.closedAt = closedAt;
-	}
-
-	public CommentStatus getProcessingDetailStatus() {
-		return processingDetailStatus;
-	}
-
-	public void setProcessingDetailStatus(CommentStatus processingDetailStatus) {
-		this.processingDetailStatus = processingDetailStatus;
-	}
-
 	public String getCreatorId() {
 		return creatorId;
 	}
 
 	public void setCreatorId(String creatorId) {
 		this.creatorId = creatorId;
-	}
-
-	public String getResolvedById() {
-		return resolvedById;
-	}
-
-	public void setResolvedById(String resolvedById) {
-		this.resolvedById = resolvedById;
-	}
-
-	public String getClosedById() {
-		return closedById;
-	}
-
-	public void setClosedById(String closedById) {
-		this.closedById = closedById;
 	}
 }

@@ -19,7 +19,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import com.project.uhd.dto.EventDTO;
-import com.project.uhd.enums.CommentStatus;
 import com.project.uhd.enums.EventStatus;
 import com.project.uhd.util.TimestampFormatUtil;
 
@@ -55,16 +54,6 @@ public class EventQueryRepository {
 		dto.setDetails(rs.getString("DETAILS"));
 		dto.setRawJsonPayload(rs.getString("RAW_JSON_PAYLOAD"));
 		dto.setAssignedTo(rs.getString("ASSIGNED_TO"));
-		dto.setAcknowledgedAt(TimestampFormatUtil.format(rs.getObject("ACKNOWLEDGED_AT", OffsetDateTime.class)));
-		dto.setReadBy(rs.getString("READ_BY"));
-		dto.setResolvedBy(rs.getString("RESOLVED_BY"));
-		dto.setResolvedAt(TimestampFormatUtil.format(rs.getObject("RESOLVED_AT", OffsetDateTime.class)));
-		dto.setClosedBy(rs.getString("CLOSED_BY"));
-		dto.setClosedAt(TimestampFormatUtil.format(rs.getObject("CLOSED_AT", OffsetDateTime.class)));
-		String processingDetailStatus = rs.getString("PROCESSING_DETAIL_STATUS");
-		if (processingDetailStatus != null) {
-			dto.setProcessingDetailStatus(CommentStatus.valueOf(processingDetailStatus.toUpperCase()));
-		}
 
 		int caseCount = rs.getInt("CASE_COUNT");
 		dto.setHasCase(caseCount > 0);
@@ -79,10 +68,6 @@ public class EventQueryRepository {
 		}
 
 		dto.setValidationErrorMessage(rs.getString("VALIDATION_ERROR_MESSAGE"));
-		
-		dto.setReadById(rs.getString("READ_BY_ID"));
-		dto.setResolvedById(rs.getString("RESOLVED_BY_ID"));
-		dto.setClosedById(rs.getString("CLOSED_BY_ID"));
 
 		return dto;
 	};

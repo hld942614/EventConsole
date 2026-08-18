@@ -21,7 +21,6 @@ import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.Table;
 
-import com.project.uhd.enums.CommentStatus;
 import com.project.uhd.enums.EventStatus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -104,33 +103,6 @@ public class Event {
 	@Column(name = "ASSIGNED_DEPT")
 	private String assignedDept;
 
-	@Column(name = "ACKNOWLEDGED_AT")
-	private OffsetDateTime acknowledgedAt;
-
-	@Column(name = "RESOLVED_AT")
-	private OffsetDateTime resolvedAt;
-
-	@Column(name = "CLOSED_AT")
-	private OffsetDateTime closedAt;
-
-	@Column(name = "READ_BY", length = 100)
-	private String readBy;
-
-	@Column(name = "RESOLVED_BY", length = 100)
-	private String resolvedBy;
-
-	@Column(name = "CLOSED_BY", length = 100)
-	private String closedBy;
-
-	@Column(name = "READ_BY_ID", length = 100)
-	private String readById;
-
-	@Column(name = "RESOLVED_BY_ID", length = 100)
-	private String resolvedById;
-
-	@Column(name = "CLOSED_BY_ID", length = 100)
-	private String closedById;
-
 	@Enumerated(EnumType.STRING)
 	@Column(name = "EVENT_STATUS", nullable = false)
 	private EventStatus status = EventStatus.UNREAD;
@@ -147,10 +119,6 @@ public class Event {
 	@OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
 	@JsonIgnore
 	private Set<Comment> comments = new HashSet<>();
-
-	@Enumerated(EnumType.STRING)
-	@Column(name = "PROCESSING_DETAIL_STATUS", length = 30)
-	private CommentStatus processingDetailStatus;
 
 	@PrePersist
 	public void onCreate() {
@@ -334,54 +302,6 @@ public class Event {
 		this.assignedDept = assignedDept;
 	}
 
-	public OffsetDateTime getAcknowledgedAt() {
-		return acknowledgedAt;
-	}
-
-	public void setAcknowledgedAt(OffsetDateTime acknowledgedAt) {
-		this.acknowledgedAt = acknowledgedAt;
-	}
-
-	public OffsetDateTime getResolvedAt() {
-		return resolvedAt;
-	}
-
-	public void setResolvedAt(OffsetDateTime resolvedAt) {
-		this.resolvedAt = resolvedAt;
-	}
-
-	public OffsetDateTime getClosedAt() {
-		return closedAt;
-	}
-
-	public void setClosedAt(OffsetDateTime closedAt) {
-		this.closedAt = closedAt;
-	}
-
-	public String getReadById() {
-		return readById;
-	}
-
-	public void setReadById(String readById) {
-		this.readById = readById;
-	}
-
-	public String getResolvedById() {
-		return resolvedById;
-	}
-
-	public void setResolvedById(String resolvedById) {
-		this.resolvedById = resolvedById;
-	}
-
-	public String getClosedById() {
-		return closedById;
-	}
-
-	public void setClosedById(String closedById) {
-		this.closedById = closedById;
-	}
-
 	public EventStatus getStatus() {
 		return status;
 	}
@@ -430,37 +350,5 @@ public class Event {
 
 	public void setCaze(Case caze) {
 		this.caze = caze;
-	}
-
-	public String getReadBy() {
-		return readBy;
-	}
-
-	public void setReadBy(String readBy) {
-		this.readBy = readBy;
-	}
-
-	public String getResolvedBy() {
-		return resolvedBy;
-	}
-
-	public void setResolvedBy(String resolvedBy) {
-		this.resolvedBy = resolvedBy;
-	}
-
-	public String getClosedBy() {
-		return closedBy;
-	}
-
-	public void setClosedBy(String closedBy) {
-		this.closedBy = closedBy;
-	}
-
-	public CommentStatus getProcessingDetailStatus() {
-		return processingDetailStatus;
-	}
-
-	public void setProcessingDetailStatus(CommentStatus processingDetailStatus) {
-		this.processingDetailStatus = processingDetailStatus;
 	}
 }

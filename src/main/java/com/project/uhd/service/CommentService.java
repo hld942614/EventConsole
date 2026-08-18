@@ -12,10 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.project.uhd.authentication.CustomUserDetails;
 import com.project.uhd.dto.CaseCommentCreateRequest;
-import com.project.uhd.dto.CaseDTO;
 import com.project.uhd.dto.CommentDTO;
 import com.project.uhd.dto.EventCommentCreateRequest;
-import com.project.uhd.dto.EventDTO;
 import com.project.uhd.entity.Case;
 import com.project.uhd.entity.Comment;
 import com.project.uhd.entity.Event;
@@ -80,14 +78,8 @@ public class CommentService {
 
 		Comment saved = commentRepository.save(comment);
 
-		// 依 commentStatus 決定目標狀態：只有 RESOLVED/CLOSED 會跳過 PROCESSING 直接轉，
-	    // 其餘（含 null）交給 applyCommentStatus 內建的 ensureProcessingOnComment 邏輯處理。
-	    CaseStatus targetStatus = resolveTargetCaseStatus(commentStatus);
-	    caseService.applyCommentStatus(target, targetStatus, currentUser);
-
-	    if (commentStatus != null) {
-	        applyCaseProcessingDetail(target, commentStatus);
-	    }
+		CaseStatus targetStatus = resolveTargetCaseStatus(commentStatus);
+		caseService.applyCommentStatus(target, targetStatus, currentUser, saved.getCommentId());
 
 		CommentDTO dto = new CommentDTO(saved);
 		realtimeEventService.publish(EventType.COMMENT_CREATED, "CASE", target.getId(), dto);
@@ -118,11 +110,7 @@ public class CommentService {
 		Comment saved = commentRepository.save(comment);
 
 		EventStatus targetStatus = resolveTargetEventStatus(commentStatus);
-	    eventStatusService.applyCommentStatus(target, targetStatus, currentUser);
-
-	    if (commentStatus != null) {
-	        applyEventProcessingDetail(target, commentStatus);
-	    }
+		eventStatusService.applyCommentStatus(target, targetStatus, currentUser, saved.getCommentId());
 
 		CommentDTO dto = new CommentDTO(saved);
 		realtimeEventService.publish(EventType.COMMENT_CREATED, "EVENT", target.getEventId(), dto);
@@ -206,48 +194,18 @@ public class CommentService {
 		}
 		throw new IllegalArgumentException("content 不可為空");
 	}
-
-	/**
-	 * 呼叫此方法前，呼叫端必須先執行過 eventStatusService.ensureProcessingOnComment(...)， 確保
-	 * UNREAD/ACKNOWLEDGED 都已經晉升過，且 CLASSIFIED 已在 createEventComment
-	 * 一開始就被擋下。走到這裡若還不是 PROCESSING，代表事件已經是 RESOLVED/CLOSED
-	 * 這種終態，這種情況下不允許再切換處理中細節子狀態，是合理的例外。
-	 */
-	private void applyEventProcessingDetail(Event event, CommentStatus detailStatus) {
-		if (event.getStatus() != EventStatus.PROCESSING) {
-			return;
-		}
-		event.setProcessingDetailStatus(detailStatus);
-		EventDTO dto = new EventDTO(event);
-		realtimeEventService.publish(EventType.EVENT_PROCESSING_DETAIL_UPDATED, "EVENT", event.getEventId(), dto);
-	}
-
-	private void applyCaseProcessingDetail(Case caze, CommentStatus commentStatus) {
-		if (caze.getStatus() != CaseStatus.PROCESSING) {
-			return;
-		}
-		caze.setProcessingDetailStatus(commentStatus);
-		CaseDTO dto = new CaseDTO(caze);
-		realtimeEventService.publish(EventType.CASE_PROCESSING_DETAIL_UPDATED, "CASE", caze.getId(), dto);
-	}
 	
 	private EventStatus resolveTargetEventStatus(CommentStatus commentStatus) {
-	    if (commentStatus == CommentStatus.RESOLVED) {
-	        return EventStatus.RESOLVED;
-	    }
-	    if (commentStatus == CommentStatus.CLOSED) {
-	        return EventStatus.CLOSED;
-	    }
-	    return null;
+		if (commentStatus == null) {
+			return null;
+		}
+		return EventStatus.valueOf(commentStatus.name());
 	}
 	
 	private CaseStatus resolveTargetCaseStatus(CommentStatus commentStatus) {
-	    if (commentStatus == CommentStatus.RESOLVED) {
-	        return CaseStatus.RESOLVED;
-	    }
-	    if (commentStatus == CommentStatus.CLOSED) {
-	        return CaseStatus.CLOSED;
-	    }
-	    return null;
+		if (commentStatus == null) {
+			return null;
+		}
+		return CaseStatus.valueOf(commentStatus.name());
 	}
 }

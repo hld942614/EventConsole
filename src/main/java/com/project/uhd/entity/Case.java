@@ -20,7 +20,6 @@ import javax.persistence.Table;
 import org.json.JSONObject;
 
 import com.project.uhd.enums.CaseStatus;
-import com.project.uhd.enums.CommentStatus;
 import com.project.uhd.util.YesNoToBooleanConverter;
 
 import lombok.AllArgsConstructor;
@@ -65,26 +64,8 @@ public class Case {
 	@Column(name = "CASE_UPDATED_AT")
 	private LocalDateTime updatedAt;
 
-	@Column(name = "CASE_RESOLVED_BY", length = 100)
-	private String resolvedBy;
-
-	@Column(name = "CASE_RESOLVED_AT")
-	private LocalDateTime resolvedAt;
-
-	@Column(name = "CASE_CLOSED_BY", length = 100)
-	private String closedBy;
-
-	@Column(name = "CASE_CLOSED_AT")
-	private LocalDateTime closedAt;
-
 	@Column(name = "CASE_CREATOR_ID", length = 100)
 	private String creatorId;
-
-	@Column(name = "CASE_RESOLVED_BY_ID", length = 100)
-	private String resolvedById;
-
-	@Column(name = "CASE_CLOSED_BY_ID", length = 100)
-	private String closedById;
 
 	@OneToMany(mappedBy = "caze", cascade = CascadeType.ALL, orphanRemoval = true)
 	private Set<Comment> comments = new HashSet<>();
@@ -95,10 +76,6 @@ public class Case {
 	@Enumerated(EnumType.STRING)
 	@Column(name = "CASE_STATUS", length = 20, nullable = false)
 	private CaseStatus status = CaseStatus.OPEN;
-
-	@Enumerated(EnumType.STRING)
-	@Column(name = "PROCESSING_DETAIL_STATUS", length = 30)
-	private CommentStatus processingDetailStatus;
 
 	public Long getId() {
 		return id;
@@ -188,22 +165,6 @@ public class Case {
 		this.creatorId = creatorId;
 	}
 
-	public String getResolvedById() {
-		return resolvedById;
-	}
-
-	public void setResolvedById(String resolvedById) {
-		this.resolvedById = resolvedById;
-	}
-
-	public String getClosedById() {
-		return closedById;
-	}
-
-	public void setClosedById(String closedById) {
-		this.closedById = closedById;
-	}
-
 	public void addComment(Comment c) {
 		this.comments.add(c);
 		c.setCaze(this);
@@ -238,46 +199,6 @@ public class Case {
 	public void removeEvent(Event event) {
 		this.events.remove(event);
 		event.setCaze(null);
-	}
-
-	public String getResolvedBy() {
-		return resolvedBy;
-	}
-
-	public void setResolvedBy(String resolvedBy) {
-		this.resolvedBy = resolvedBy;
-	}
-
-	public LocalDateTime getResolvedAt() {
-		return resolvedAt;
-	}
-
-	public void setResolvedAt(LocalDateTime resolvedAt) {
-		this.resolvedAt = resolvedAt;
-	}
-
-	public String getClosedBy() {
-		return closedBy;
-	}
-
-	public void setClosedBy(String closedBy) {
-		this.closedBy = closedBy;
-	}
-
-	public LocalDateTime getClosedAt() {
-		return closedAt;
-	}
-
-	public void setClosedAt(LocalDateTime closedAt) {
-		this.closedAt = closedAt;
-	}
-
-	public CommentStatus getProcessingDetailStatus() {
-		return processingDetailStatus;
-	}
-
-	public void setProcessingDetailStatus(CommentStatus processingDetailStatus) {
-		this.processingDetailStatus = processingDetailStatus;
 	}
 
 	@Override

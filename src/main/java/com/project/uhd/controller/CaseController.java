@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.project.uhd.authentication.CustomUserDetails;
@@ -22,6 +23,7 @@ import com.project.uhd.dto.ApiResponse;
 import com.project.uhd.dto.CaseCreateRequest;
 import com.project.uhd.dto.CaseDTO;
 import com.project.uhd.dto.CaseUpdateRequest;
+import com.project.uhd.dto.StatusLogDTO;
 import com.project.uhd.entity.Case;
 import com.project.uhd.service.CaseService;
 
@@ -112,5 +114,12 @@ public class CaseController {
 		} catch (IllegalStateException e) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, e.getMessage(), null));
 		}
+	}
+	
+	@GetMapping("/{caseId}/status-log")
+	public ResponseEntity<ApiResponse<List<StatusLogDTO>>> getCaseStatusHistory(@PathVariable Long caseId,
+			@RequestParam(value = "order", required = false, defaultValue = "asc") String order) {
+		List<StatusLogDTO> history = caseService.getStatusHistory(caseId, order);
+		return ResponseEntity.ok(new ApiResponse<>(true, "Status history fetched", history));
 	}
 }

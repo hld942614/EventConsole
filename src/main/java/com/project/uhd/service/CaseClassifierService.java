@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.project.uhd.dto.Condition;
 import com.project.uhd.entity.Case;
 import com.project.uhd.entity.Event;
+import com.project.uhd.enums.ChangeSource;
 import com.project.uhd.realtime.event.EventType;
 import com.project.uhd.realtime.service.RealtimeEventService;
 import com.project.uhd.repository.CaseRepository;
@@ -74,7 +75,7 @@ public class CaseClassifierService {
 		winner.addEvent(event);
 		caseRepository.save(winner);
 
-		eventStatusService.classifyIntoCase(event);
+		eventStatusService.classifyIntoCase(event, null, ChangeSource.SYSTEM);
 
 		realtimeEventService.publish(EventType.EVENT_CLASSIFIED, "CASE-EVENT", winner.getId(), event);
 

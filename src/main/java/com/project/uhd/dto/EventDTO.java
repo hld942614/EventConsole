@@ -4,7 +4,6 @@ import java.util.List;
 
 import com.project.uhd.entity.Event;
 import com.project.uhd.entity.UploadedFile;
-import com.project.uhd.enums.CommentStatus;
 import com.project.uhd.enums.EventStatus;
 import com.project.uhd.util.TimestampFormatUtil;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -29,23 +28,12 @@ public class EventDTO {
 	private String details;
 	private String assignedTo;
 	private String acknowledgedAt;
-	private String readBy;
-	private String resolvedBy;
-	private String resolvedAt;
-	private String closedBy;
-	private String closedAt;
-	private String readById;
-	private String resolvedById;
-	private String closedById;
-
 	private boolean hasCase;
 	private List<Long> caseIds;
 	@JsonRawValue
 	private String rawJsonPayload;
 
 	private String validationErrorMessage; // 只有 INVALID 狀態才會有值
-
-	private CommentStatus processingDetailStatus;
 	
 	private List<UploadedFile> sopFileList;
 
@@ -66,20 +54,9 @@ public class EventDTO {
 		this.occurredAt = TimestampFormatUtil.format(event.getOccurredAt());
 		this.details = event.getDetails();
 		this.assignedTo = event.getAssignedTo();
-		this.acknowledgedAt = TimestampFormatUtil.format(event.getAcknowledgedAt());
 		this.rawJsonPayload = event.getRawJsonPayload();
-		this.readBy = event.getReadBy();
-		this.resolvedBy = event.getResolvedBy();
-		this.resolvedAt = TimestampFormatUtil.format(event.getResolvedAt());
-		this.closedBy = event.getClosedBy();
-		this.closedAt = TimestampFormatUtil.format(event.getClosedAt());
-		
-		this.readById = event.getReadById();
-		this.resolvedById = event.getResolvedById();
-		this.closedById = event.getClosedById();
 
 		this.validationErrorMessage = event.getValidationErrorMessage();
-		this.processingDetailStatus = event.getProcessingDetailStatus();
 	}
 
 	public static SourceInfo buildSource(String environment, String host, String ip) {
@@ -229,78 +206,6 @@ public class EventDTO {
 
 	public void setValidationErrorMessage(String validationErrorMessage) {
 		this.validationErrorMessage = validationErrorMessage;
-	}
-
-	public String getReadBy() {
-		return readBy;
-	}
-
-	public void setReadBy(String readBy) {
-		this.readBy = readBy;
-	}
-
-	public String getResolvedBy() {
-		return resolvedBy;
-	}
-
-	public void setResolvedBy(String resolvedBy) {
-		this.resolvedBy = resolvedBy;
-	}
-
-	public String getResolvedAt() {
-		return resolvedAt;
-	}
-
-	public void setResolvedAt(String resolvedAt) {
-		this.resolvedAt = resolvedAt;
-	}
-
-	public String getClosedBy() {
-		return closedBy;
-	}
-
-	public void setClosedBy(String closedBy) {
-		this.closedBy = closedBy;
-	}
-
-	public String getClosedAt() {
-		return closedAt;
-	}
-
-	public void setClosedAt(String closedAt) {
-		this.closedAt = closedAt;
-	}
-
-	public CommentStatus getProcessingDetailStatus() {
-		return processingDetailStatus;
-	}
-
-	public void setProcessingDetailStatus(CommentStatus processingDetailStatus) {
-		this.processingDetailStatus = processingDetailStatus;
-	}
-
-	public String getReadById() {
-		return readById;
-	}
-
-	public void setReadById(String readById) {
-		this.readById = readById;
-	}
-
-	public String getResolvedById() {
-		return resolvedById;
-	}
-
-	public void setResolvedById(String resolvedById) {
-		this.resolvedById = resolvedById;
-	}
-
-	public String getClosedById() {
-		return closedById;
-	}
-
-	public void setClosedById(String closedById) {
-		this.closedById = closedById;
 	}
 	
 	public List<UploadedFile> getSopFileList() {

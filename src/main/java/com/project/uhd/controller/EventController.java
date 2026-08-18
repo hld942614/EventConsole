@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.project.uhd.authentication.CustomUserDetails;
@@ -18,6 +19,7 @@ import com.project.uhd.dto.ApiResponse;
 import com.project.uhd.dto.EventDTO;
 import com.project.uhd.dto.EventSearchRequest;
 import com.project.uhd.dto.EventStatusUpdateRequest;
+import com.project.uhd.dto.StatusLogDTO;
 import com.project.uhd.entity.Event;
 import com.project.uhd.service.EventService;
 import com.project.uhd.service.EventStatusService;
@@ -84,5 +86,12 @@ public class EventController {
 			@AuthenticationPrincipal CustomUserDetails currentUser) {
 		Event event = eventStatusService.close(eventId, currentUser);
 		return ResponseEntity.ok(new ApiResponse<>(true, "Event closed", new EventDTO(event)));
+	}
+	
+	@GetMapping("/{eventId}/status-log")
+	public ResponseEntity<ApiResponse<List<StatusLogDTO>>> getEventStatusHistory(@PathVariable String eventId,
+			@RequestParam(value = "order", required = false, defaultValue = "asc") String order) {
+		List<StatusLogDTO> history = eventService.getStatusHistory(eventId, order);
+		return ResponseEntity.ok(new ApiResponse<>(true, "Status history fetched", history));
 	}
 }

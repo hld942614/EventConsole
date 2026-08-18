@@ -9,6 +9,7 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -21,8 +22,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.project.uhd.dto.AttachmentInfoDTO;
 import com.project.uhd.dto.EventDTO;
+import com.project.uhd.dto.StatusLogDTO;
 import com.project.uhd.entity.Event;
+import com.project.uhd.enums.ChangeSource;
 import com.project.uhd.enums.EventStatus;
+import com.project.uhd.enums.StatusLogTargetType;
 import com.project.uhd.exception.InvalidEventPayloadException;
 import com.project.uhd.realtime.event.EventType;
 import com.project.uhd.realtime.service.RealtimeEventService;
@@ -54,11 +58,13 @@ public class EventService {
 	private final RealtimeEventService realtimeEventService;
 	private final CaseClassifierService caseClassifierService;
 	private final UploadedFileRepository uploadedFileRepository;
+	private final StatusLogService statusLogService;
 
 	public EventService(EventRepository eventRepository, ModuleCodeResolver moduleCodeResolver,
 			EventIdGeneratorService eventIdGeneratorService,
 			AttachmentService attachmentService, EventQueryRepository eventQueryRepository,
-			RealtimeEventService realtimeEventService, CaseClassifierService caseClassifierService, UploadedFileRepository uploadedFileRepository) {
+			RealtimeEventService realtimeEventService, CaseClassifierService caseClassifierService, 
+			UploadedFileRepository uploadedFileRepository, StatusLogService statusLogService) {
 		this.eventRepository = eventRepository;
 		this.moduleCodeResolver = moduleCodeResolver;
 		this.eventIdGeneratorService = eventIdGeneratorService;
@@ -67,20 +73,8 @@ public class EventService {
 		this.realtimeEventService = realtimeEventService;
 		this.caseClassifierService = caseClassifierService;
 		this.uploadedFileRepository = uploadedFileRepository;
+		this.statusLogService = statusLogService;
 	}
-
-	/**
-	 * 判斷 Kafka 收到的字串是否為新格式（.eml，本文為 alertCode/source/occurredAt 結構的 JSON）。 供
-	 * KafkaConsumerService 判斷要走新流程還是舊有的 transferApiToMsg / transferMailToMsg。
-	 */
-//	public boolean isNewAlertEventFormat(String rawEmlContent) {
-//		try {
-//			JSONObject body = extractJsonBody(rawEmlContent);
-//			return body != null && body.has("source") && body.has("occurredAt") && body.has("severity");
-//		} catch (Exception e) {
-//			return false;
-//		}
-//	}
 
 	@Transactional
 	public Event processNewEvent(String rawEmlContent) {
@@ -235,6 +229,9 @@ public class EventService {
 		event = eventRepository.save(event);
 		attachmentService.storeAttachments(event, attachments);
 
+		statusLogService.log(StatusLogTargetType.EVENT, event.getId(), EventStatus.UNREAD.name(),
+				null, null, ChangeSource.SYSTEM, null);
+		
 		return eventRepository.save(event);
 	}
 
@@ -295,5 +292,12 @@ public class EventService {
 			dto.setSopFileList(uploadedFileRepository.findByAlertCodeOrderByTimestampDesc(alertCode));
 		}
 		return dto;
+	}
+	
+	@Transactional(readOnly = true)
+	public List<StatusLogDTO> getStatusHistory(String eventId, String order) {
+		Event event = eventRepository.findByEventId(eventId)
+				.orElseThrow(() -> new NoSuchElementException("Event not found: " + eventId));
+		return statusLogService.getHistory(StatusLogTargetType.EVENT, event.getId(), order);
 	}
 }

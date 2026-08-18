@@ -10,10 +10,12 @@ import javax.persistence.EntityManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.project.uhd.authentication.CustomUserDetails;
 import com.project.uhd.dto.EventDTO;
 import com.project.uhd.entity.Case;
 import com.project.uhd.entity.Event;
 import com.project.uhd.enums.CaseStatus;
+import com.project.uhd.enums.ChangeSource;
 import com.project.uhd.enums.EventStatus;
 import com.project.uhd.realtime.event.EventType;
 import com.project.uhd.realtime.service.RealtimeEventService;
@@ -36,9 +38,9 @@ public class CaseEventService {
 	private final EventQueryRepository eventQueryRepository;
 	private final EntityManager entityManager;
 
-	public CaseEventService(EventRepository eventRepository,
-			RealtimeEventService realtimeEventService, CaseRepository caseRepository,
-			EventStatusService eventStatusService, EventQueryRepository eventQueryRepository, EntityManager entityManager) {
+	public CaseEventService(EventRepository eventRepository, RealtimeEventService realtimeEventService,
+			CaseRepository caseRepository, EventStatusService eventStatusService,
+			EventQueryRepository eventQueryRepository, EntityManager entityManager) {
 		this.eventRepository = eventRepository;
 		this.realtimeEventService = realtimeEventService;
 		this.caseRepository = caseRepository;
@@ -48,7 +50,8 @@ public class CaseEventService {
 	}
 
 	@Transactional
-	public void addEventsToCase(Long caseId, List<String> eventIds, String assignedTo) {
+	public void addEventsToCase(Long caseId, List<String> eventIds, String assignedTo,
+			CustomUserDetails currentUser) {
 		if (caseId == null || eventIds == null || eventIds.isEmpty()) {
 			return;
 		}
@@ -85,7 +88,7 @@ public class CaseEventService {
 
 		for (Event event : foundEvents) {
 			event.setCaze(targetCase);
-			eventStatusService.classifyIntoCase(event);
+			eventStatusService.classifyIntoCase(event, currentUser, ChangeSource.USER);
 		}
 		entityManager.flush();
 		List<EventDTO> updatedEventDtos = eventQueryRepository.findAllByEventIdIn(filteredEventIds);
@@ -93,7 +96,7 @@ public class CaseEventService {
 	}
 
 	@Transactional
-	public void removeCaseEvents(Long caseId, List<String> eventIds) {
+	public void removeCaseEvents(Long caseId, List<String> eventIds, CustomUserDetails currentUser) {
 		if (caseId == null || eventIds == null || eventIds.isEmpty()) {
 			return;
 		}
@@ -107,7 +110,7 @@ public class CaseEventService {
 		for (Event event : foundEvents) {
 			if (event.getCaze() != null && event.getCaze().getId().equals(caseId)) {
 				event.setCaze(null);
-				eventStatusService.unclassifyFromCase(event);
+				eventStatusService.unclassifyFromCase(event, currentUser);
 			}
 		}
 		entityManager.flush();

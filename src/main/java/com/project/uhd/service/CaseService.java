@@ -1,6 +1,5 @@
 package com.project.uhd.service;
 
-import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -17,9 +16,12 @@ import com.project.uhd.dto.CaseCreateRequest;
 import com.project.uhd.dto.CaseDTO;
 import com.project.uhd.dto.CaseUpdateRequest;
 import com.project.uhd.dto.EventDTO;
+import com.project.uhd.dto.StatusLogDTO;
 import com.project.uhd.entity.Case;
 import com.project.uhd.entity.Event;
 import com.project.uhd.enums.CaseStatus;
+import com.project.uhd.enums.ChangeSource;
+import com.project.uhd.enums.StatusLogTargetType;
 import com.project.uhd.realtime.event.EventType;
 import com.project.uhd.realtime.service.RealtimeEventService;
 import com.project.uhd.repository.CaseRepository;
@@ -33,15 +35,17 @@ public class CaseService {
 	private EntityManager entityManager;
 	private final EventQueryRepository eventQueryRepository;
 	private final EventStatusService eventStatusService;
+	private final StatusLogService statusLogService;
 
 	public CaseService(CaseRepository caseRepository, RealtimeEventService realtimeEventService,
 			EntityManager entityManager, EventQueryRepository eventQueryRepository,
-			EventStatusService eventStatusService) {
+			EventStatusService eventStatusService, StatusLogService statusLogService) {
 		this.caseRepository = caseRepository;
 		this.realtimeEventService = realtimeEventService;
 		this.entityManager = entityManager;
 		this.eventQueryRepository = eventQueryRepository;
 		this.eventStatusService = eventStatusService;
+		this.statusLogService = statusLogService;
 	}
 
 	@Transactional
@@ -58,6 +62,9 @@ public class CaseService {
 		Case saved = caseRepository.save(newCase);
 		entityManager.flush();
 		entityManager.refresh(saved);
+
+		statusLogService.log(StatusLogTargetType.CASE, saved.getId(), CaseStatus.OPEN.name(),
+				currentUser.getChineseName(), currentUser.getId(), ChangeSource.USER, null);
 
 		CaseDTO dto = new CaseDTO(saved);
 		realtimeEventService.publish(EventType.CASE_CREATED, "CASE", dto.getId(), dto);
@@ -80,26 +87,28 @@ public class CaseService {
 		realtimeEventService.publish(EventType.CASE_DELETED, "CASE", dto.getId(), dto);
 	}
 
-	/**
-	 * 留言時同步指定的狀態轉換。 targetStatus 為 null 或 PROCESSING：沿用原本 ensureProcessingOnComment
-	 * 的自動判斷邏輯 （只有 OPEN 會被推進到 PROCESSING）。 targetStatus 為 RESOLVED / CLOSED：走
-	 * resolveCase/closeCase，含 cascade 更新底下 Event 狀態。
-	 */
 	@Transactional
-	public void applyCommentStatus(Case target, CaseStatus targetStatus, CustomUserDetails currentUser) {
-		if (targetStatus == null || targetStatus == CaseStatus.PROCESSING) {
-			ensureProcessingOnComment(target);
+	public void applyCommentStatus(Case target, CaseStatus targetStatus, CustomUserDetails currentUser,
+			Long relatedCommentId) {
+		if (targetStatus == CaseStatus.RESOLVED) {
+			resolveCase(target.getId(), currentUser, ChangeSource.USER, relatedCommentId);
 			return;
 		}
-		switch (targetStatus) {
-		case RESOLVED:
-			resolveCase(target.getId(), currentUser);
-			break;
-		case CLOSED:
-			closeCase(target.getId(), currentUser);
-			break;
-		default:
+		if (targetStatus == CaseStatus.CLOSED) {
+			closeCase(target.getId(), currentUser, ChangeSource.USER, relatedCommentId);
+			return;
+		}
+
+		CaseStatus effectiveTarget = (targetStatus == null) ? CaseStatus.PROCESSING : targetStatus;
+		if (!effectiveTarget.isProcessingPhase()) {
 			throw new IllegalArgumentException("留言無法將 Case 轉換為狀態: " + targetStatus);
+		}
+
+		if (target.getStatus() == CaseStatus.OPEN || target.getStatus().isProcessingPhase()) {
+			setStatusWithLog(target, effectiveTarget, currentUser, ChangeSource.USER, relatedCommentId);
+			Case saved = caseRepository.save(target);
+			CaseDTO dto = new CaseDTO(saved);
+			realtimeEventService.publish(EventType.CASE_PROCESSING, "CASE", dto.getId(), dto);
 		}
 	}
 
@@ -141,10 +150,6 @@ public class CaseService {
 		return dto;
 	}
 
-	/**
-	 * Case 被留言時呼叫。只有 OPEN 才會晉升 PROCESSING； 已經是 PROCESSING/RESOLVED/CLOSED
-	 * 則不動作、不重複推播。
-	 */
 	@Transactional
 	public void ensureProcessingOnComment(Case target) {
 		if (target.getStatus() != CaseStatus.OPEN) {
@@ -158,6 +163,16 @@ public class CaseService {
 
 	@Transactional
 	public CaseDTO resolveCase(Long caseId, CustomUserDetails currentUser) {
+		return resolveCase(caseId, currentUser, ChangeSource.USER, null);
+	}
+
+	@Transactional
+	public CaseDTO closeCase(Long caseId, CustomUserDetails currentUser) {
+		return closeCase(caseId, currentUser, ChangeSource.USER, null);
+	}
+	
+	@Transactional
+	public CaseDTO resolveCase(Long caseId, CustomUserDetails currentUser, ChangeSource source, Long relatedCommentId) {
 		Case existingCase = caseRepository.findById(caseId)
 				.orElseThrow(() -> new NoSuchElementException("Case not found"));
 
@@ -165,11 +180,7 @@ public class CaseService {
 			throw new IllegalStateException("Case 目前狀態為 " + existingCase.getStatus() + "，無法再解決: caseId=" + caseId);
 		}
 
-		existingCase.setStatus(CaseStatus.RESOLVED);
-		existingCase.setProcessingDetailStatus(null);
-		existingCase.setResolvedBy(currentUser.getChineseName());
-		existingCase.setResolvedById(currentUser.getId());
-		existingCase.setResolvedAt(LocalDateTime.now());
+		setStatusWithLog(existingCase, CaseStatus.RESOLVED, currentUser, source, relatedCommentId);
 
 		for (Event event : existingCase.getEvents()) {
 			eventStatusService.cascadeResolveFromCase(event, currentUser);
@@ -182,7 +193,7 @@ public class CaseService {
 	}
 
 	@Transactional
-	public CaseDTO closeCase(Long caseId, CustomUserDetails currentUser) {
+	public CaseDTO closeCase(Long caseId, CustomUserDetails currentUser, ChangeSource source, Long relatedCommentId) {
 		Case existingCase = caseRepository.findById(caseId)
 				.orElseThrow(() -> new NoSuchElementException("Case not found"));
 
@@ -190,11 +201,7 @@ public class CaseService {
 			throw new IllegalStateException("Case 目前狀態為 " + existingCase.getStatus() + "，無法再結案: caseId=" + caseId);
 		}
 
-		existingCase.setStatus(CaseStatus.CLOSED);
-		existingCase.setProcessingDetailStatus(null);
-		existingCase.setClosedBy(currentUser.getChineseName());
-		existingCase.setClosedById(currentUser.getId());
-		existingCase.setClosedAt(LocalDateTime.now());
+		setStatusWithLog(existingCase, CaseStatus.CLOSED, currentUser, source, relatedCommentId);
 
 		for (Event event : existingCase.getEvents()) {
 			eventStatusService.cascadeCloseFromCase(event, currentUser);
@@ -204,5 +211,21 @@ public class CaseService {
 		CaseDTO dto = new CaseDTO(saved);
 		realtimeEventService.publish(EventType.CASE_CLOSED, "CASE", dto.getId(), dto);
 		return dto;
+	}
+
+	@Transactional(readOnly = true)
+	public List<StatusLogDTO> getStatusHistory(Long caseId, String order) {
+		if (!caseRepository.existsById(caseId)) {
+			throw new NoSuchElementException("Case not found: " + caseId);
+		}
+		return statusLogService.getHistory(StatusLogTargetType.CASE, caseId, order);
+	}
+
+	private void setStatusWithLog(Case target, CaseStatus newStatus, CustomUserDetails currentUser,
+			ChangeSource source, Long relatedCommentId) {
+		target.setStatus(newStatus);
+		statusLogService.log(StatusLogTargetType.CASE, target.getId(), newStatus.name(),
+				currentUser != null ? currentUser.getChineseName() : null,
+				currentUser != null ? currentUser.getId() : null, source, relatedCommentId);
 	}
 }
