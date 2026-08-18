@@ -14,6 +14,7 @@ public class StatusLogDTO {
 	private String source;
 	private Long relatedCommentId;
 	private String changedAt;
+	private String commentContent;
 
 	public StatusLogDTO(StatusLog log) {
 		this.id = log.getId();
@@ -97,5 +98,13 @@ public class StatusLogDTO {
 
 	public void setChangedAt(String changedAt) {
 		this.changedAt = changedAt;
+	}
+
+	public String getCommentContent() {
+		return commentContent;
+	}
+
+	public void setCommentContent(String commentContent) {
+		this.commentContent = commentContent;
 	}
 }

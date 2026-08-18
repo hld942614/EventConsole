@@ -99,7 +99,7 @@ public class EventService {
 
 	@Transactional(readOnly = true)
 	public Optional<EventDTO> getEventDTO(String eventId) {
-		return eventQueryRepository.findByEventId(eventId).map(this::attachSopFiles);
+		return eventQueryRepository.findByEventId(eventId).map(this::attachSopFiles).map(this::attachStatusLog);
 	}
 
 	@Transactional
@@ -291,6 +291,11 @@ public class EventService {
 		if (alertCode != null && !alertCode.isBlank()) {
 			dto.setSopFileList(uploadedFileRepository.findByAlertCodeOrderByTimestampDesc(alertCode));
 		}
+		return dto;
+	}
+	
+	private EventDTO attachStatusLog(EventDTO dto) {
+		dto.setLogList(getStatusHistory(dto.getEventId(),"ASC"));
 		return dto;
 	}
 	

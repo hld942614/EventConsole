@@ -10,15 +10,18 @@ import com.project.uhd.dto.StatusLogDTO;
 import com.project.uhd.entity.StatusLog;
 import com.project.uhd.enums.ChangeSource;
 import com.project.uhd.enums.StatusLogTargetType;
+import com.project.uhd.repository.CommentRepository;
 import com.project.uhd.repository.StatusLogRepository;
 
 @Service
 public class StatusLogService {
 
 	private final StatusLogRepository statusLogRepository;
+	private final CommentRepository commentRepository;
 
-	public StatusLogService(StatusLogRepository statusLogRepository) {
+	public StatusLogService(StatusLogRepository statusLogRepository, CommentRepository commentRepository) {
 		this.statusLogRepository = statusLogRepository;
+		this.commentRepository = commentRepository;
 	}
 
 	@Transactional
@@ -40,6 +43,14 @@ public class StatusLogService {
 		Sort sort = "desc".equalsIgnoreCase(order) ? Sort.by("changedAt").descending()
 				: Sort.by("changedAt").ascending();
 		return statusLogRepository.findByEntityTypeAndEntityId(targetType, entityId, sort).stream()
-				.map(StatusLogDTO::new).toList();
+				.map(StatusLogDTO::new).map(this::attachComment).toList();
+	}
+	
+	private StatusLogDTO attachComment(StatusLogDTO dto) {
+		if(dto.getRelatedCommentId()==null) {
+			return dto;
+		}
+		dto.setCommentContent(commentRepository.findById(dto.getRelatedCommentId()).get().getCommentContent());
+		return dto;
 	}
 }

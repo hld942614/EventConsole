@@ -16,7 +16,6 @@ import com.project.uhd.entity.Case;
 import com.project.uhd.entity.Event;
 import com.project.uhd.enums.CaseStatus;
 import com.project.uhd.enums.ChangeSource;
-import com.project.uhd.enums.EventStatus;
 import com.project.uhd.realtime.event.EventType;
 import com.project.uhd.realtime.service.RealtimeEventService;
 import com.project.uhd.repository.CaseRepository;
@@ -116,13 +115,5 @@ public class CaseEventService {
 		entityManager.flush();
 		List<EventDTO> updatedEventDtos = eventQueryRepository.findAllByEventIdIn(filteredEventIds);
 		realtimeEventService.publish(EventType.EVENT_RECLASSIFIED, "CASE-EVENT", caseId, updatedEventDtos);
-	}
-
-	@Transactional
-	public void updateEventsStatusByCaseId(Long caseId, EventStatus targetStatus) {
-		List<Event> events = eventRepository.findByCaze_Id(caseId);
-		for (Event e : events) {
-			e.setStatus(targetStatus);
-		}
 	}
 }

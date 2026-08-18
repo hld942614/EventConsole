@@ -150,16 +150,16 @@ public class CaseService {
 		return dto;
 	}
 
-	@Transactional
-	public void ensureProcessingOnComment(Case target) {
-		if (target.getStatus() != CaseStatus.OPEN) {
-			return;
-		}
-		target.setStatus(CaseStatus.PROCESSING);
-		Case saved = caseRepository.save(target);
-		CaseDTO dto = new CaseDTO(saved);
-		realtimeEventService.publish(EventType.CASE_PROCESSING, "CASE", dto.getId(), dto);
-	}
+//	@Transactional
+//	public void ensureProcessingOnComment(Case target) {
+//		if (target.getStatus() != CaseStatus.OPEN) {
+//			return;
+//		}
+//		target.setStatus(CaseStatus.PROCESSING);
+//		Case saved = caseRepository.save(target);
+//		CaseDTO dto = new CaseDTO(saved);
+//		realtimeEventService.publish(EventType.CASE_PROCESSING, "CASE", dto.getId(), dto);
+//	}
 
 	@Transactional
 	public CaseDTO resolveCase(Long caseId, CustomUserDetails currentUser) {

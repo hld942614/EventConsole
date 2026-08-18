@@ -36,6 +36,8 @@ public class EventDTO {
 	private String validationErrorMessage; // 只有 INVALID 狀態才會有值
 	
 	private List<UploadedFile> sopFileList;
+	
+	private List<StatusLogDTO> logList;
 
 	public EventDTO() {
 	}
@@ -55,7 +57,6 @@ public class EventDTO {
 		this.details = event.getDetails();
 		this.assignedTo = event.getAssignedTo();
 		this.rawJsonPayload = event.getRawJsonPayload();
-
 		this.validationErrorMessage = event.getValidationErrorMessage();
 	}
 
@@ -214,6 +215,14 @@ public class EventDTO {
 
 	public void setSopFileList(List<UploadedFile> sopFileList) {
 		this.sopFileList = sopFileList;
+	}
+
+	public List<StatusLogDTO> getLogList() {
+		return logList;
+	}
+
+	public void setLogList(List<StatusLogDTO> logList) {
+		this.logList = logList;
 	}
 
 	@JsonInclude(JsonInclude.Include.NON_NULL)
