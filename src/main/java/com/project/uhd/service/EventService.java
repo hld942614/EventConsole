@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -61,10 +62,10 @@ public class EventService {
 	private final StatusLogService statusLogService;
 
 	public EventService(EventRepository eventRepository, ModuleCodeResolver moduleCodeResolver,
-			EventIdGeneratorService eventIdGeneratorService,
-			AttachmentService attachmentService, EventQueryRepository eventQueryRepository,
-			RealtimeEventService realtimeEventService, CaseClassifierService caseClassifierService, 
-			UploadedFileRepository uploadedFileRepository, StatusLogService statusLogService) {
+			EventIdGeneratorService eventIdGeneratorService, AttachmentService attachmentService,
+			EventQueryRepository eventQueryRepository, RealtimeEventService realtimeEventService,
+			CaseClassifierService caseClassifierService, UploadedFileRepository uploadedFileRepository,
+			StatusLogService statusLogService) {
 		this.eventRepository = eventRepository;
 		this.moduleCodeResolver = moduleCodeResolver;
 		this.eventIdGeneratorService = eventIdGeneratorService;
@@ -187,7 +188,7 @@ public class EventService {
 		}
 		OffsetDateTime occurredAt;
 		try {
-			occurredAt = Instant.ofEpochMilli(data.getLong("occurredAt")).atOffset(ZoneOffset.UTC);
+			occurredAt = Instant.ofEpochSecond(data.getLong("occurredAt")).atOffset(ZoneOffset.UTC);
 		} catch (Exception e) {
 			throw new InvalidEventPayloadException("occurredAt 格式錯誤: " + data.getString("occurredAt"), e);
 		}
@@ -229,9 +230,9 @@ public class EventService {
 		event = eventRepository.save(event);
 		attachmentService.storeAttachments(event, attachments);
 
-		statusLogService.log(StatusLogTargetType.EVENT, event.getId(), EventStatus.UNREAD.name(),
-				null, null, ChangeSource.SYSTEM, null);
-		
+		statusLogService.log(StatusLogTargetType.EVENT, event.getId(), EventStatus.UNREAD.name(), null, null,
+				ChangeSource.SYSTEM, null);
+
 		return eventRepository.save(event);
 	}
 
@@ -285,7 +286,7 @@ public class EventService {
 			return false;
 		}
 	}
-	
+
 	private EventDTO attachSopFiles(EventDTO dto) {
 		String alertCode = dto.getAlertCode();
 		if (alertCode != null && !alertCode.isBlank()) {
@@ -293,12 +294,13 @@ public class EventService {
 		}
 		return dto;
 	}
-	
+
 	private EventDTO attachStatusLog(EventDTO dto) {
-		dto.setLogList(getStatusHistory(dto.getEventId(),"ASC"));
+		dto.setLogList(getStatusHistory(dto.getEventId(), "ASC").stream()
+				.filter(log -> !"UNREAD".equals(log.getStatus())).collect(Collectors.toList()));
 		return dto;
 	}
-	
+
 	@Transactional(readOnly = true)
 	public List<StatusLogDTO> getStatusHistory(String eventId, String order) {
 		Event event = eventRepository.findByEventId(eventId)

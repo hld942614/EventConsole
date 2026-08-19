@@ -1,7 +1,6 @@
 package com.project.uhd.controller;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.project.uhd.dto.ApiResponse;
 import com.project.uhd.dto.CategoryContentUpdateRequest;
 import com.project.uhd.dto.CategoryCreateRequest;
+import com.project.uhd.dto.EventCategoryStatsDTO;
 import com.project.uhd.dto.UpdateParentDto;
 import com.project.uhd.entity.Category;
 import com.project.uhd.service.CategoryService;
@@ -44,16 +44,6 @@ public class CategoryController {
 		return ResponseEntity.ok(new ApiResponse<>(true, "Category saved successfully", saved));
 	}
 
-//    @GetMapping("/main")
-//    public ResponseEntity<ApiResponse<List<Category>>> getMainCategory() {
-//        return ResponseEntity.ok(new ApiResponse<>(true, "Main categories retrieved", service.getMain()));
-//    }
-
-//    @GetMapping("/sub")
-//    public ResponseEntity<ApiResponse<List<Category>>> getSubCategory() {
-//        return ResponseEntity.ok(new ApiResponse<>(true, "Sub categories retrieved", service.getSub()));
-//    }
-
 	@GetMapping("/alert/{parentId}")
 	public ResponseEntity<ApiResponse<List<Category>>> getAlertByParentId(@PathVariable int parentId) {
 		return ResponseEntity
@@ -65,12 +55,7 @@ public class CategoryController {
 		return ResponseEntity
 				.ok(new ApiResponse<>(true, "Sub categories retrieved", service.getSubByParentId(parentId)));
 	}
-
-//    @GetMapping("/main/by-alert/{alertCode}")
-//    public ResponseEntity<ApiResponse<Category>> getMainByAlertCode(@PathVariable String alertCode) {
-//        return ResponseEntity.ok(new ApiResponse<>(true, "Main category code retrieved", service.getMainByAlertCode(alertCode)));
-//    }
-
+	
 	@GetMapping("/all")
 	public ResponseEntity<ApiResponse<List<Category>>> getAllCategory() {
 		return ResponseEntity.ok(new ApiResponse<>(true, "All categories retrieved", service.getAll()));
@@ -82,19 +67,10 @@ public class CategoryController {
 		return ResponseEntity.ok(new ApiResponse<>(true, "Category deleted", null));
 	}
 
-	@GetMapping("/count/msg")
-	public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getCategoryStats() {
-		return ResponseEntity.ok(new ApiResponse<>(true, "Category stats", service.getCategoryStats()));
-	}
-
 	@GetMapping("/count/event")
-	public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getEventCategoryStats() {
+	public ResponseEntity<ApiResponse<List<EventCategoryStatsDTO>>> getEventCategoryStats() {
 		return ResponseEntity.ok(new ApiResponse<>(true, "Category stats (event)", service.getEventCategoryStats()));
 	}
-//    @GetMapping("/count/sub")
-//    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getCategorySubCount() {
-//        return ResponseEntity.ok(new ApiResponse<>(true, "Sub category count", service.getCategorySubCount()));
-//    }
 
 	@GetMapping("/detail/{id}")
 	public ResponseEntity<ApiResponse<Category>> getDetailById(@PathVariable Long id) {

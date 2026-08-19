@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -17,8 +18,10 @@ import org.springframework.stereotype.Service;
 
 import com.project.uhd.dto.CategoryContentUpdateRequest;
 import com.project.uhd.dto.CategoryCreateRequest;
+import com.project.uhd.dto.EventCategoryStatsDTO;
 import com.project.uhd.dto.UpdateParentDto;
 import com.project.uhd.entity.Category;
+import com.project.uhd.enums.EventStatus;
 import com.project.uhd.repository.CategoryRepository;
 
 @Service
@@ -80,9 +83,16 @@ public class CategoryService {
 
 	public List<Category> getAlertByParentId(int parentId) {
 		List<Category> list = new ArrayList<>();
-		String sql = "SELECT \r\n" + "CATEGORY_ID, \r\n" + "CATEGORY_PARENTID, \r\n" + "CATEGORY_CODE, \r\n"
-				+ "CATEGORY_TITLE, \r\n" + "CATEGORY_CONTENT\r\n" + "FROM MUHD_CATEGORY\r\n" + "WHERE LEVEL=2\r\n"
-				+ "START WITH CATEGORY_PARENTID = ? \r\n" + "CONNECT BY PRIOR CATEGORY_ID = CATEGORY_PARENTID";
+		String sql = "SELECT "
+				+ "    CATEGORY_ID, "
+				+ "    CATEGORY_PARENTID, "
+				+ "    CATEGORY_CODE, "
+				+ "    CATEGORY_TITLE, "
+				+ "    CATEGORY_CONTENT "
+				+ "FROM MUHD_CATEGORY "
+				+ "WHERE LEVEL = 2 "
+				+ "START WITH CATEGORY_PARENTID = ? "
+				+ "CONNECT BY PRIOR CATEGORY_ID = CATEGORY_PARENTID";
 		try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
 				PreparedStatement stmt = conn.prepareStatement(sql);) {
 			stmt.setInt(1, parentId);
@@ -99,7 +109,10 @@ public class CategoryService {
 
 	public List<Category> getSubByParentId(int parentId) {
 		List<Category> list = new ArrayList<>();
-		String sql = "SELECT * FROM MUHD_CATEGORY WHERE CATEGORY_PARENTID = ? ORDER BY CATEGORY_CODE ASC";
+		String sql = "SELECT * "
+				+ "FROM MUHD_CATEGORY "
+				+ "WHERE CATEGORY_PARENTID = ? "
+				+ "ORDER BY CATEGORY_CODE ASC";
 		try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
 				PreparedStatement stmt = conn.prepareStatement(sql);) {
 			stmt.setInt(1, parentId);
@@ -115,9 +128,12 @@ public class CategoryService {
 	}
 
 	public Category getMainByAlertCode(String alertCode) {
-		String sql = "SELECT\r\n" + "    *\r\n" + "FROM\r\n"
-				+ "    MUHD_CATEGORY START WITH CATEGORY_CODE = ? CONNECT BY PRIOR CATEGORY_PARENTID = CATEGORY_ID\r\n"
-				+ "ORDER BY\r\n" + "    LEVEL DESC\r\n" + "FETCH FIRST\r\n" + "    1 ROW ONLY";
+		String sql = "SELECT * "
+				+ "FROM MUHD_CATEGORY "
+				+ "START WITH CATEGORY_CODE = ? "
+				+ "CONNECT BY PRIOR CATEGORY_PARENTID = CATEGORY_ID "
+				+ "ORDER BY LEVEL DESC "
+				+ "FETCH FIRST 1 ROW ONLY";
 		try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
 				PreparedStatement stmt = conn.prepareStatement(sql);) {
 			stmt.setString(1, alertCode);
@@ -132,111 +148,89 @@ public class CategoryService {
 		return null;
 	}
 
-	public List<Map<String, Object>> getCategoryStats() {
-		List<Map<String, Object>> rtnList = new ArrayList<>();
-		String sql = "WITH CATEGORY_HIERARCHY AS (\r\n" + "    SELECT\r\n" + "        CATEGORY_ID,\r\n"
-				+ "        CATEGORY_CODE,\r\n" + "        CATEGORY_PARENTID,\r\n" + "        CATEGORY_CONTENT,\r\n"
-				+ "        CATEGORY_TITLE,\r\n" + "        CONNECT_BY_ROOT CATEGORY_CODE    AS ROOT_CATEGORY_CODE,\r\n"
-				+ "        CONNECT_BY_ROOT CATEGORY_ID      AS ROOT_CATEGORY_ID,\r\n"
-				+ "        CONNECT_BY_ROOT CATEGORY_TITLE   AS ROOT_CATEGORY_TITLE,\r\n"
-				+ "        CONNECT_BY_ROOT CATEGORY_CONTENT AS ROOT_CATEGORY_CONTENT\r\n" + "    FROM MUHD_CATEGORY\r\n"
-				+ "    START WITH CATEGORY_PARENTID = 0\r\n"
-				+ "    CONNECT BY PRIOR CATEGORY_ID = CATEGORY_PARENTID\r\n" + ")\r\n" + "-- 各主類別（根）匯總\r\n"
-				+ "SELECT\r\n" + "    CH.ROOT_CATEGORY_CODE    AS MAINTYPE,\r\n"
-				+ "    CH.ROOT_CATEGORY_ID      AS CATEGORY_ID,\r\n"
-				+ "    CH.ROOT_CATEGORY_CONTENT AS CATEGORY_CONTENT,\r\n"
-				+ "    CH.ROOT_CATEGORY_TITLE   AS CATEGORY_TITLE,\r\n"
-				+ "    SUM(CASE WHEN A.MESSAGE_STATUS = 'PROCESSING'   THEN 1 ELSE 0 END) AS PROCESSING_COUNT,\r\n"
-				+ "    SUM(CASE WHEN A.MESSAGE_STATUS = 'UNPROCESSED' THEN 1 ELSE 0 END) AS UNPROCESSED_COUNT\r\n"
-				+ "FROM CATEGORY_HIERARCHY CH\r\n" + "LEFT JOIN MUHD_MESSAGE A\r\n"
-				+ "       ON A.MESSAGE_ALERTCODE = CH.CATEGORY_CODE\r\n" + "      AND NOT EXISTS (\r\n"
-				+ "          SELECT 1\r\n" + "          FROM MUHD_CASE_MESSAGE CM\r\n"
-				+ "          WHERE CM.MESSAGE_ID = A.MESSAGE_ID\r\n" + "      )\r\n" + "GROUP BY\r\n"
-				+ "    CH.ROOT_CATEGORY_CODE,\r\n" + "    CH.ROOT_CATEGORY_ID,\r\n"
-				+ "    CH.ROOT_CATEGORY_CONTENT,\r\n" + "    CH.ROOT_CATEGORY_TITLE\r\n" + "\r\n" + "UNION ALL\r\n"
-				+ "\r\n" + "-- 未分類（Others）\r\n" + "SELECT\r\n" + "    'Others'               AS MAINTYPE,\r\n"
-				+ "    NULL                   AS CATEGORY_ID,\r\n"
-				+ "    NULL                   AS CATEGORY_CONTENT,\r\n"
-				+ "    '未分類'               AS CATEGORY_TITLE,\r\n"
-				+ "    SUM(CASE WHEN M.MESSAGE_STATUS = 'PROCESSING'   THEN 1 ELSE 0 END) AS PROCESSING_COUNT,\r\n"
-				+ "    SUM(CASE WHEN M.MESSAGE_STATUS = 'UNPROCESSED' THEN 1 ELSE 0 END) AS UNPROCESSED_COUNT\r\n"
-				+ "FROM MUHD_MESSAGE M\r\n" + "WHERE (M.MESSAGE_ALERTCODE IS NULL\r\n"
-				+ "    OR M.MESSAGE_ALERTCODE NOT IN (SELECT CATEGORY_CODE FROM MUHD_CATEGORY))\r\n"
-				+ "  AND NOT EXISTS (\r\n" + "      SELECT 1\r\n" + "      FROM MUHD_CASE_MESSAGE CM\r\n"
-				+ "      WHERE CM.MESSAGE_ID = M.MESSAGE_ID\r\n" + "  )\r\n" + "\r\n"
+	public List<EventCategoryStatsDTO> getEventCategoryStats() {
+		List<EventCategoryStatsDTO> rtnList = new ArrayList<>();
+
+		String sql = "SELECT "
+				+ "    c.CATEGORY_CODE AS MAINTYPE, "
+				+ "    c.CATEGORY_ID AS CATEGORY_ID, "
+				+ "    c.CATEGORY_CONTENT AS CATEGORY_CONTENT, "
+				+ "    c.CATEGORY_TITLE AS CATEGORY_TITLE, "
+				+ "    e.EVENT_STATUS AS EVENT_STATUS, "
+				+ "    COUNT(e.ID) AS EVENT_COUNT "
+				+ "FROM MUHD_CATEGORY c "
+				+ "LEFT JOIN MUHD_EVENT e "
+				+ "       ON e.MODULE_CODE = c.CATEGORY_CODE "
+				+ "      AND e.CASE_ID IS NULL "
+				+ "WHERE c.CATEGORY_PARENTID = 0 "
+				+ "GROUP BY "
+				+ "    c.CATEGORY_CODE, "
+				+ "    c.CATEGORY_ID, "
+				+ "    c.CATEGORY_CONTENT, "
+				+ "    c.CATEGORY_TITLE, "
+				+ "    e.EVENT_STATUS "
+				+ "UNION ALL "
+				+ "SELECT "
+				+ "    'Others' AS MAINTYPE, "
+				+ "    NULL AS CATEGORY_ID, "
+				+ "    NULL AS CATEGORY_CONTENT, "
+				+ "    '未分類' AS CATEGORY_TITLE, "
+				+ "    e.EVENT_STATUS AS EVENT_STATUS, "
+				+ "    COUNT(e.ID) AS EVENT_COUNT "
+				+ "FROM MUHD_EVENT e "
+				+ "WHERE e.CASE_ID IS NULL "
+				+ "  AND (e.MODULE_CODE IS NULL "
+				+ "    OR e.MODULE_CODE NOT IN (SELECT CATEGORY_CODE FROM MUHD_CATEGORY)) "
+				+ "GROUP BY e.EVENT_STATUS "
 				+ "ORDER BY CATEGORY_ID NULLS LAST";
+
 		try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
 				PreparedStatement stmt = conn.prepareStatement(sql);
 				ResultSet result = stmt.executeQuery()) {
 
+			Map<String, EventCategoryStatsDTO> categoryMap = new LinkedHashMap<>();
 			while (result.next()) {
-				Map<String, Object> row = new HashMap<>();
-				row.put("code", result.getString("MAINTYPE"));
-				row.put("id", result.getString("CATEGORY_ID"));
-				row.put("content", result.getString("CATEGORY_CONTENT"));
-				row.put("title", result.getString("CATEGORY_TITLE"));
-				row.put("processing_count", result.getInt("PROCESSING_COUNT"));
-				row.put("unprocessed_count", result.getInt("UNPROCESSED_COUNT"));
-				rtnList.add(row);
+				String code = result.getString("MAINTYPE");
+				Long id = result.getObject("CATEGORY_ID", Long.class);
+
+				String key = code + "_" + id;
+
+				EventCategoryStatsDTO row = categoryMap.get(key);
+
+				if (row == null) {
+					Map<String, Integer> count = new LinkedHashMap<>();
+
+					for (EventStatus status : EventStatus.values()) {
+						if (status == EventStatus.INVALID) {
+							continue;
+						}
+
+						count.put(status.name().toLowerCase(), 0);
+					}
+
+					row = new EventCategoryStatsDTO(
+							code,
+							id,
+							result.getString("CATEGORY_TITLE"),
+							result.getString("CATEGORY_CONTENT"),
+							count
+					);
+					categoryMap.put(key, row);
+				}
+				String statusCode = result.getString("EVENT_STATUS");
+				if (statusCode != null) {
+					try {
+						EventStatus status = EventStatus.valueOf(statusCode);
+						if (status == EventStatus.INVALID) {
+							continue;
+						}
+						row.getCount().put(status.name().toLowerCase(),result.getInt("EVENT_COUNT"));
+					} catch (IllegalArgumentException ex) {
+						System.err.println("Unknown EVENT_STATUS: " + statusCode);
+					}
+				}
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return rtnList;
-	}
-
-	public List<Map<String, Object>> getEventCategoryStats() {
-		List<Map<String, Object>> rtnList = new ArrayList<>();
-		String sql = "SELECT\r\n" + "    c.CATEGORY_CODE AS MAINTYPE,\r\n" + "    c.CATEGORY_ID AS CATEGORY_ID,\r\n"
-				+ "    c.CATEGORY_CONTENT AS CATEGORY_CONTENT,\r\n" + "    c.CATEGORY_TITLE AS CATEGORY_TITLE,\r\n"
-				+ "    SUM(CASE WHEN e.EVENT_STATUS = 'UNREAD' THEN 1 ELSE 0 END) AS UNREAD_COUNT,\r\n"
-				+ "    SUM(CASE WHEN e.EVENT_STATUS = 'ACKNOWLEDGED' THEN 1 ELSE 0 END) AS ACKNOWLEDGED_COUNT,\r\n"
-				+ "    SUM(CASE WHEN e.EVENT_STATUS = 'CLASSIFIED' THEN 1 ELSE 0 END) AS CLASSIFIED_COUNT,\r\n"
-				+ "    SUM(CASE WHEN e.EVENT_STATUS = 'PROCESSING' THEN 1 ELSE 0 END) AS PROCESSING_COUNT,\r\n"
-				+ "    SUM(CASE WHEN e.EVENT_STATUS = 'RESOLVED' THEN 1 ELSE 0 END) AS RESOLVED_COUNT,\r\n"
-				+ "    SUM(CASE WHEN e.EVENT_STATUS = 'CLOSED' THEN 1 ELSE 0 END) AS CLOSED_COUNT\r\n"
-				+ "FROM MUHD_CATEGORY c\r\n" + "LEFT JOIN MUHD_EVENT e\r\n"
-				+ "       ON e.MODULE_CODE = c.CATEGORY_CODE\r\n" + "      AND NOT EXISTS (\r\n"
-				+ "          SELECT 1\r\n" + "          FROM MUHD_CASE_EVENT ce\r\n"
-				+ "          WHERE ce.EVENT_PK = e.ID\r\n" + "      )\r\n" + "WHERE c.CATEGORY_PARENTID = 0\r\n"
-				+ "GROUP BY\r\n" + "    c.CATEGORY_CODE,\r\n" + "    c.CATEGORY_ID,\r\n" + "    c.CATEGORY_CONTENT,\r\n"
-				+ "    c.CATEGORY_TITLE\r\n" + "\r\n" + "UNION ALL\r\n" + "\r\n" + "SELECT\r\n"
-				+ "    'Others' AS MAINTYPE,\r\n" + "    NULL AS CATEGORY_ID,\r\n" + "    NULL AS CATEGORY_CONTENT,\r\n"
-				+ "    '未分類' AS CATEGORY_TITLE,\r\n"
-				+ "    SUM(CASE WHEN e.EVENT_STATUS = 'UNREAD' THEN 1 ELSE 0 END) AS UNREAD_COUNT,\r\n"
-				+ "    SUM(CASE WHEN e.EVENT_STATUS = 'ACKNOWLEDGED' THEN 1 ELSE 0 END) AS ACKNOWLEDGED_COUNT,\r\n"
-				+ "    SUM(CASE WHEN e.EVENT_STATUS = 'CLASSIFIED' THEN 1 ELSE 0 END) AS CLASSIFIED_COUNT,\r\n"
-				+ "    SUM(CASE WHEN e.EVENT_STATUS = 'PROCESSING' THEN 1 ELSE 0 END) AS PROCESSING_COUNT,\r\n"
-				+ "    SUM(CASE WHEN e.EVENT_STATUS = 'RESOLVED' THEN 1 ELSE 0 END) AS RESOLVED_COUNT,\r\n"
-				+ "    SUM(CASE WHEN e.EVENT_STATUS = 'CLOSED' THEN 1 ELSE 0 END) AS CLOSED_COUNT\r\n"
-				+ "FROM MUHD_EVENT e\r\n" + "WHERE (e.MODULE_CODE IS NULL\r\n"
-				+ "    OR e.MODULE_CODE NOT IN (SELECT CATEGORY_CODE FROM MUHD_CATEGORY))\r\n"
-				+ "  AND NOT EXISTS (\r\n" + "      SELECT 1\r\n" + "      FROM MUHD_CASE_EVENT ce\r\n"
-				+ "      WHERE ce.EVENT_PK = e.ID\r\n" + "  )\r\n" + "\r\n" + "ORDER BY CATEGORY_ID NULLS LAST";
-		try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
-				PreparedStatement stmt = conn.prepareStatement(sql);
-				ResultSet result = stmt.executeQuery()) {
-
-			while (result.next()) {
-				Map<String, Object> row = new HashMap<>();
-
-				row.put("code", result.getString("MAINTYPE"));
-				row.put("id", result.getString("CATEGORY_ID"));
-				row.put("content", result.getString("CATEGORY_CONTENT"));
-				row.put("title", result.getString("CATEGORY_TITLE"));
-
-				Map<String, Integer> count = new HashMap<>();
-				count.put("unread", result.getInt("UNREAD_COUNT"));
-				count.put("acknowledged", result.getInt("ACKNOWLEDGED_COUNT"));
-				count.put("classified", result.getInt("CLASSIFIED_COUNT"));
-				count.put("processing", result.getInt("PROCESSING_COUNT"));
-				count.put("resolved", result.getInt("RESOLVED_COUNT"));
-				count.put("closed", result.getInt("CLOSED_COUNT"));
-
-				row.put("count", count);
-
-				rtnList.add(row);
-			}
+			rtnList.addAll(categoryMap.values());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
